@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="km" class="scroll-smooth">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="format-detection" content="telephone=no"/>
+<title>វិថីឆ្ពោះទៅកាន់អាជីពខ្ញុំ — Pro Assessment & AI</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&family=Syne:wght@400;700;800&family=Noto+Sans+Khmer:wght@300;400;600;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<style>
+/* កែផ្ទៃខាងក្រោយឱ្យងងឹតដិតជាងមុន (#020205) */
+:root { --neon-blue:#00f0ff; --neon-purple:#b44fff; --neon-pink:#ff2d9b; --bg-deep:#020205; --bg-card:rgba(255,255,255,0.03); --border-glow:rgba(0,240,255,0.15); }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg-deep);font-family:'Syne',sans-serif;color:#e2e8f0;overflow-x:hidden;display:flex;flex-direction:column;min-height:100vh; transition: background-color 0.3s, color 0.3s;}
+
+/* Typography System */
+.khmer { font-family: 'Noto Sans Khmer', sans-serif; line-height: 1.8; text-align: left; } 
+.khmer-center { font-family: 'Noto Sans Khmer', sans-serif; line-height: 1.8; text-align: center; } 
+.khmer-title { font-family: 'Kantumruy Pro', 'Noto Sans Khmer', sans-serif; line-height: 1.6; }
+.mono { font-family: 'Space Mono', monospace; }
+
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,240,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,0.015) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.orb{position:absolute;border-radius:50%;filter:blur(120px);opacity:.15;pointer-events:none;}
+.glass{background:var(--bg-card);border:1px solid var(--border-glow);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px); transition: background-color 0.3s, border-color 0.3s;}
+
+.grad-text{
+    background:linear-gradient(135deg,var(--neon-blue) 0%,var(--neon-purple) 50%,var(--neon-pink) 100%);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+    display: inline-block;
+    padding-bottom: 0.15em !important;
+    padding-top: 0.1em !important;
+}
+
+.btn-neon{position:relative;background:linear-gradient(135deg,var(--neon-blue),var(--neon-purple));color:#000;font-weight:700;letter-spacing:.05em;transition:transform .2s,box-shadow .2s;box-shadow:0 0 30px rgba(0,240,255,.3),0 0 60px rgba(180,79,255,.2);cursor:pointer;border:none;}
+.btn-neon:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 0 50px rgba(0,240,255,.5),0 0 100px rgba(180,79,255,.3);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}} .fade-up{animation:fadeUp .7s ease forwards;}
+.page{display:none;} .page.active{display:block;}
+nav{backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);} main{flex:1;}
+.dropdown-content{display:none;position:absolute;top:100%;left:50%;transform:translateX(-50%);min-width:240px;z-index:100;padding-top:20px;}
+.dropdown:hover .dropdown-content{display:block;}
+.test-card, .job-card{transition:all .3s;} 
+.test-card:hover, .job-card:hover{transform:translateY(-5px);border-color:var(--neon-blue);box-shadow:0 0 30px rgba(0,240,255,.15);}
+.locked-card{opacity:0.8; cursor:not-allowed;} .locked-card:hover{border-color:var(--neon-pink);box-shadow:0 0 30px rgba(255,45,155,.2);}
+.option-btn{transition:all 0.2s; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05);}
+.option-btn:hover{background:rgba(0,240,255,0.1); border-color:rgba(0,240,255,0.5);}
+.option-btn.selected{background:var(--neon-blue); color:black; font-weight:bold; border-color:var(--neon-blue); box-shadow:0 0 15px rgba(0,240,255,0.4);}
+.modal-overlay{background:rgba(0,0,0,.8);backdrop-filter:blur(8px);}
+#expertChatMessages{scrollbar-width:thin;scrollbar-color:rgba(180,79,255,.3) transparent;}
+#expertChatMessages::-webkit-scrollbar{width:3px;} #expertChatMessages::-webkit-scrollbar-thumb{background:rgba(180,79,255,.3);border-radius:2px;}
+.msg-user{background:linear-gradient(135deg,rgba(0,240,255,.15),rgba(180,79,255,.15));border:1px solid rgba(0,240,255,.2);border-radius:18px 18px 4px 18px;}
+.msg-ai{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:18px 18px 18px 4px;}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}} .msg-in{animation:msgIn .3s ease forwards;}
+@keyframes typingBounce{0%,80%,100%{transform:translateY(0);opacity:.4;}40%{transform:translateY(-6px);opacity:1;}}
+.typing-dot{width:7px;height:7px;border-radius:50%;background:var(--neon-blue);animation:typingBounce 1.2s infinite ease-in-out;}
+.typing-dot:nth-child(2){animation-delay:.2s;}.typing-dot:nth-child(3){animation-delay:.4s;}
+
+/* LIGHT MODE */
+body.light-mode { --bg-deep: #f0f4f8; color: #0f172a; }
+body.light-mode::before { background-image: linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px); }
+.light-mode .glass { background: rgba(255, 255, 255, 0.85); border-color: rgba(0, 0, 0, 0.15); box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+.light-mode nav, .light-mode footer { background: rgba(241, 245, 249, 0.9) !important; border-color: rgba(0,0,0,0.1); }
+.light-mode .text-white { color: #0f172a !important; }
+.light-mode .text-slate-200, .light-mode .text-slate-300 { color: #334155 !important; }
+.light-mode .text-slate-400, .light-mode .text-slate-500 { color: #475569 !important; }
+.light-mode .bg-black\/40, .light-mode .bg-black\/60, .light-mode .bg-\[\#020205\]\/80, .light-mode .bg-slate-900\/40 { background-color: rgba(255,255,255,0.95) !important; border-color: rgba(0,0,0,0.1) !important; }
+.light-mode .bg-black\/50 { background-color: rgba(0,0,0,0.05) !important; }
+.light-mode input { color: #0f172a !important; background: rgba(0,0,0,0.05) !important; border-color: rgba(0,0,0,0.2) !important; }
+.light-mode input::placeholder { color: #64748b !important; }
+.light-mode .msg-ai { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.15); color: #0f172a; }
+.light-mode .msg-user { color: #0f172a; }
+.light-mode .border-white\/10, .light-mode .border-white\/20, .light-mode .border-cyan-500\/20 { border-color: rgba(0,0,0,0.1) !important; }
+.light-mode .bg-white\/5 { background-color: rgba(0,0,0,0.05) !important; }
+.light-mode .hover\:bg-white\/5:hover { background-color: rgba(0,0,0,0.1) !important; }
+.light-mode .hover\:text-white:hover { color: #000 !important; }
+#mobileMenu.light-mode-menu { background: rgba(240, 244, 248, 0.98) !important; }
+
+/* HEADER NAV BUTTONS STYLING */
+.nav-btn { padding: 6px 14px; border-radius: 9999px; border: 1px solid transparent; transition: all 0.3s ease; white-space: nowrap; background: rgba(255,255,255,0.03); }
+.nav-btn:hover { border-color: rgba(0, 240, 255, 0.4); background: rgba(0, 240, 255, 0.05); box-shadow: 0 0 15px rgba(0,240,255,0.1); }
+.nav-btn:hover .nav-text { background: linear-gradient(135deg, var(--neon-blue) 0%, var(--neon-purple) 50%, var(--neon-pink) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; display: inline-block; padding-bottom: 0.1em; }
+.light-mode .nav-btn { background: rgba(0,0,0,0.03); }
+.light-mode .nav-btn:hover { background: rgba(0,240,255,0.1); border-color: rgba(0,240,255,0.3); }
+
+/* Logo TVET object fix */
+.logo-container { flex-shrink: 0; width: 3.5rem; height: 3.5rem; border-radius: 9999px; background: #fff; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.2); overflow: hidden; padding: 0.25rem; }
+.logo-img { width: 100%; height: 100%; object-fit: contain; border-radius: 9999px; }
+
+/* ═══════════════════════════════════════
+   MOBILE & RESPONSIVE FIXES (V19-R)
+═══════════════════════════════════════ */
+
+/* Prevent horizontal overflow everywhere */
+html, body { max-width: 100%; overflow-x: hidden; }
+img, video, iframe { max-width: 100%; }
+
+/* Touch-friendly tap targets — min 44×44px */
+button, a, .option-btn, .test-card, .job-card, .nav-btn {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+button, a { min-height: 44px; }
+.option-btn { min-height: 54px; }
+
+/* Prevent iOS zoom on input focus */
+input, textarea, select {
+  font-size: 16px !important;
+  -webkit-appearance: none;
+  border-radius: 0;
+}
+
+/* Safe area insets (iPhone notch / home bar) */
+nav { padding-top: env(safe-area-inset-top, 0); }
+footer { padding-bottom: env(safe-area-inset-bottom, 0); }
+#mobileMenu { padding-top: env(safe-area-inset-top, 0); padding-bottom: env(safe-area-inset-bottom, 0); }
+
+/* Smooth scrolling & momentum on iOS */
+#expertChatMessages, .overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ── Mobile: xs–sm (≤ 480px) ── */
+@media (max-width: 480px) {
+
+  /* Navbar: tighter padding */
+  nav .max-w-\[1400px\] { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+
+  /* Hero section: stack vertically, reduce padding */
+  #page-home section { padding-top: 6rem !important; padding-bottom: 3rem !important; }
+  #page-home .md\:w-1\/2 { width: 100% !important; }
+  #page-home h1 { font-size: 1.9rem !important; line-height: 1.25 !important; }
+  #page-home p.text-lg { font-size: 0.95rem !important; }
+
+  /* Carousel: full width */
+  #carouselTrack { height: 180px !important; }
+  #page-home .aspect-video { aspect-ratio: 16/9; }
+
+  /* CTA buttons: full width stacked */
+  #page-home .flex.flex-col.sm\:flex-row { flex-direction: column !important; width: 100%; }
+  #page-home .flex.flex-col.sm\:flex-row button { width: 100% !important; font-size: 1rem !important; padding: 1rem !important; }
+
+  /* Test cards: single column */
+  #page-tests .grid { grid-template-columns: 1fr !important; }
+  .test-card { padding: 1.25rem !important; }
+  .test-card h2 { font-size: 1.2rem !important; }
+
+  /* Quiz engine: reduce padding */
+  #page-quiz .glass { padding: 1.25rem !important; }
+  #question-text { font-size: 1.1rem !important; }
+  #options-container { gap: 0.75rem !important; }
+  .option-btn { font-size: 0.9rem !important; padding: 0.9rem 0.75rem !important; }
+  #quiz-progress-text { font-size: 0.85rem !important; }
+
+  /* Report page */
+  #page-report .glass { padding: 1.25rem !important; }
+  #page-report h1 { font-size: 1.5rem !important; }
+
+  /* Careers grid */
+  #careerGrid { grid-template-columns: 1fr !important; }
+
+  /* Dashboard page */
+  #page-dashboard .grid { grid-template-columns: 1fr !important; }
+
+  /* AI Expert Modal: full screen */
+  #aiExpertModal .max-w-4xl { max-width: 100% !important; height: 100% !important; border-radius: 0 !important; }
+  #expertChatInput { font-size: 16px !important; padding: 0.75rem 1rem !important; }
+  #expertSendBtn { width: 3rem !important; height: 3rem !important; font-size: 1.2rem !important; }
+
+  /* Payment modal */
+  #paymentModal .max-w-lg { max-width: calc(100vw - 2rem) !important; }
+  #paymentModal .p-6 { padding: 1.25rem !important; }
+
+  /* Login modal */
+  #loginModal .max-w-sm { max-width: calc(100vw - 2rem) !important; }
+
+  /* API modal */
+  #apiModal .max-w-md { max-width: calc(100vw - 2rem) !important; padding: 1.5rem !important; }
+
+  /* Schools page */
+  #page-schools .grid { grid-template-columns: 1fr !important; }
+
+  /* Seminar page */
+  #page-seminar .grid { grid-template-columns: 1fr !important; }
+
+  /* Resources page */
+  #page-resources .grid { grid-template-columns: 1fr !important; }
+
+  /* Footer: stack vertically */
+  footer .flex.flex-col.md\:flex-row { flex-direction: column !important; align-items: center !important; gap: 0.75rem !important; }
+  footer { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.75rem); }
+
+  /* Timeline on dashboard */
+  #page-dashboard .relative.flex.items-center { flex-direction: column !important; align-items: flex-start !important; }
+
+  /* Toast: full width */
+  #toast { width: calc(100% - 2rem) !important; left: 1rem !important; transform: none !important; }
+  #toast > div { font-size: 0.85rem !important; text-align: center; }
+
+  /* About page image banner */
+  #page-about .aspect-\[21\/9\] { aspect-ratio: 16/9 !important; }
+
+  /* Sections universal padding */
+  .min-h-screen.pt-28 { padding-top: 5.5rem !important; padding-left: 1rem !important; padding-right: 1rem !important; }
+}
+
+/* ── Tablet: sm–md (481px – 768px) ── */
+@media (min-width: 481px) and (max-width: 768px) {
+
+  #page-home h1 { font-size: 2.5rem !important; }
+  #carouselTrack { height: 220px !important; }
+  #page-tests .grid { grid-template-columns: repeat(2, 1fr) !important; }
+  #careerGrid { grid-template-columns: repeat(2, 1fr) !important; }
+  #aiExpertModal .max-w-4xl { max-width: 100% !important; border-radius: 0 !important; height: 100% !important; }
+  .option-btn { font-size: 1rem !important; padding: 1rem !important; }
+  #page-quiz .glass { padding: 2rem !important; }
+}
+
+/* ── Landscape phone (height < 500px) ── */
+@media (max-height: 500px) and (orientation: landscape) {
+  #page-home section { min-height: auto !important; padding-top: 5rem !important; }
+  #aiExpertModal .max-w-4xl { height: 100vh !important; }
+  #expertChatMessages { max-height: calc(100vh - 200px) !important; }
+  #mobileMenu { overflow-y: auto !important; padding: 4rem 1rem 2rem !important; gap: 1rem !important; }
+  #mobileMenu button { font-size: 1rem !important; }
+}
+
+/* ── Universal mobile helpers ── */
+
+/* Fix overflow in modals on small screens */
+.modal-overlay + div {
+  max-height: 90vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure all grid gaps are reasonable on mobile */
+@media (max-width: 640px) {
+  .gap-6, .gap-8 { gap: 1rem !important; }
+  .gap-10, .gap-12, .gap-16 { gap: 1.5rem !important; }
+  .mb-12, .mb-16 { margin-bottom: 2rem !important; }
+  .py-20 { padding-top: 3rem !important; padding-bottom: 3rem !important; }
+  .px-6 { padding-left: 1rem !important; padding-right: 1rem !important; }
+  .text-4xl { font-size: 1.75rem !important; }
+  .text-5xl { font-size: 2rem !important; }
+  .text-6xl { font-size: 2.25rem !important; }
+  .p-8, .p-10, .p-12 { padding: 1.25rem !important; }
+  .rounded-3xl { border-radius: 1.25rem !important; }
+  
+  /* Progress bar text */
+  #quiz-progress-text { font-size: 0.8rem !important; padding: 0.4rem 0.9rem !important; }
+  
+  /* Nav buttons in quiz */
+  #btn-prev, #btn-next { font-size: 0.95rem !important; padding: 0.85rem 1.5rem !important; }
+  
+  /* Expert modal close button */
+  #aiExpertModal button[onclick="closeAiExpert()"] { font-size: 2rem !important; top: 0.75rem !important; right: 0.75rem !important; }
+  
+  /* Report page clusters */
+  #report-clusters .glass { padding: 1rem !important; }
+  #report-clusters h3 { font-size: 1rem !important; }
+  
+  /* Lock icons positioning */
+  .absolute.top-4.right-4 { top: 0.75rem !important; right: 0.75rem !important; }
+}
+
+/* Fix iOS Safari 100vh bug */
+@supports (-webkit-touch-callout: none) {
+  .min-h-screen { min-height: -webkit-fill-available; }
+  #mobileMenu { min-height: -webkit-fill-available; }
+  #aiExpertModal { min-height: -webkit-fill-available; }
+}
+
+/* Carousel track — prevent bleed on small screens */
+#carouselTrack { width: 300%; }
+#carouselTrack img { width: 33.333%; flex-shrink: 0; }
+
+/* Smooth scroll behavior */
+html { scroll-behavior: smooth; }
+
+/* Better focus rings for accessibility */
+button:focus-visible, a:focus-visible, input:focus-visible {
+  outline: 2px solid var(--neon-blue);
+  outline-offset: 2px;
+}
+</style>
+</head>
+<body>
+
+<nav class="fixed top-0 left-0 right-0 z-50 border-b border-cyan-500/20 shadow-[0_4px_30px_rgba(0,240,255,0.05)] bg-[#020205]/80 backdrop-blur-xl transition-colors duration-300">
+  <div class="max-w-[1400px] mx-auto px-4 py-3 flex items-center justify-between">
+    <button onclick="showPage('home')" class="flex items-center gap-2 sm:gap-3 bg-transparent border-none cursor-pointer text-left shrink-0">
+      <img src="https://ui-avatars.com/api/?name=CP&background=00f0ff&color=000&rounded=true&bold=true" alt="Logo" class="w-8 h-8 sm:w-10 sm:h-10 md:w-11 md:h-11 border border-cyan-500/50 rounded-full shadow-[0_0_15px_rgba(0,240,255,0.4)]">
+      <div class="flex flex-col">
+        <span class="font-bold text-[15px] sm:text-[18px] xl:text-[20px] tracking-wider grad-text khmer-title lang-text uppercase" data-km="វិថីឆ្ពោះទៅកាន់អាជីពខ្ញុំ" data-en="MY CAREER PATH">វិថីឆ្ពោះទៅកាន់អាជីពខ្ញុំ</span>
+        <span class="hidden sm:block text-[10px] xl:text-[11px] text-slate-400 khmer leading-none lang-text uppercase" data-km="សេវាកម្មប្រឹក្សាយោបល់" data-en="COUNSELING SERVICES">សេវាកម្មប្រឹក្សាយោបល់</span>
+      </div>
+    </button>
+    
+    <div class="hidden lg:flex items-center justify-center gap-1 xl:gap-3 text-[12px] xl:text-[14px] text-slate-200 flex-1 ml-2 xl:ml-4">
+      <button onclick="showPage('about')" class="nav-btn cursor-pointer khmer-title font-bold"><span class="nav-text lang-text uppercase" data-km="អំពីយើងខ្ញុំ" data-en="ABOUT US">អំពីយើងខ្ញុំ</span></button>
+      <button onclick="showPage('tests')" class="nav-btn cursor-pointer khmer-title font-bold"><span class="nav-text lang-text uppercase" data-km="តេស្តដើម្បីស្គាល់ខ្លួនឯង" data-en="SELF-DISCOVERY TEST">តេស្តដើម្បីស្គាល់ខ្លួនឯង</span></button>
+      <button onclick="showPage('careers')" class="nav-btn cursor-pointer khmer-title font-bold"><span class="nav-text lang-text uppercase" data-km="ទីផ្សារការងារ" data-en="JOB MARKET">ទីផ្សារការងារ</span></button>
+      <button onclick="showPage('dashboard')" class="nav-btn cursor-pointer khmer-title font-bold"><span class="nav-text lang-text uppercase" data-km="ផែនទីអនាគត" data-en="FUTURE ROADMAP">ផែនទីអនាគត</span></button>
+      
+      <div class="dropdown relative cursor-pointer">
+        <button class="nav-btn khmer-title font-bold flex items-center gap-1"><span class="nav-text lang-text uppercase" data-km="ផ្សេងៗ ▼" data-en="OTHERS ▼">ផ្សេងៗ ▼</span></button>
+        <div class="dropdown-content">
+          <div class="glass rounded-xl border border-cyan-500/30 flex flex-col p-2 shadow-2xl bg-[#020205]/95 backdrop-blur-xl">
+             <button onclick="showPage('resources')" class="px-4 py-3 hover:bg-white/5 rounded-lg text-[13px] xl:text-[14px] khmer text-slate-300 hover:text-cyan-400 text-left transition-colors border-none bg-transparent cursor-pointer lang-text uppercase" data-km="📰 ព័ត៌មានសេដ្ឋកិច្ច" data-en="📰 ECONOMY NEWS">📰 ព័ត៌មានសេដ្ឋកិច្ច</button>
+             <button onclick="showPage('resources')" class="px-4 py-3 hover:bg-white/5 rounded-lg text-[13px] xl:text-[14px] khmer text-slate-300 hover:text-cyan-400 text-left transition-colors border-none bg-transparent cursor-pointer lang-text uppercase" data-km="📝 គំរូសរសេរ CV" data-en="📝 RESUME TEMPLATES">📝 គំរូសរសេរ CV</button>
+             <button onclick="showPage('schools')" class="px-4 py-3 hover:bg-white/5 rounded-lg text-[13px] xl:text-[14px] khmer text-slate-300 hover:text-cyan-400 text-left transition-colors border-none bg-transparent cursor-pointer lang-text uppercase" data-km="🏫 គ្រឹះស្ថាន TVET" data-en="🏫 TVET INSTITUTES">🏫 គ្រឹះស្ថាន TVET</button>
+             <button onclick="showPage('careers')" class="px-4 py-3 hover:bg-white/5 rounded-lg text-[13px] xl:text-[14px] khmer text-slate-300 hover:text-cyan-400 text-left transition-colors border-none bg-transparent cursor-pointer lang-text uppercase" data-km="💼 ស្វែងរកការងារ" data-en="💼 FIND JOBS">💼 ស្វែងរកការងារ</button>
+             <div class="border-t border-white/10 my-1"></div>
+             <button onclick="showPage('seminar')" class="px-4 py-3 hover:bg-cyan-500/10 rounded-lg text-[13px] xl:text-[14px] khmer-title text-cyan-400 font-bold text-left transition-colors border-none bg-transparent cursor-pointer lang-text uppercase" data-km="🎟️ សិក្ខាសាលាអាជីព" data-en="🎟️ CAREER SEMINAR">🎟️ សិក្ខាសាលាអាជីព</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-2 xl:gap-3 shrink-0">
+      <div class="hidden md:flex relative">
+        <input type="text" id="desktopSearchInput" placeholder="ស្វែងរក..." oninput="handleGlobalSearch(this.value)" onkeypress="if(event.key==='Enter') handleGlobalSearchEnter(this.value)" class="lang-placeholder bg-black/40 border border-white/10 rounded-full pl-4 pr-8 py-2 text-[12px] xl:text-sm text-white outline-none focus:border-cyan-500/50 khmer w-24 xl:w-28 focus:w-40 transition-all" data-km="ស្វែងរក..." data-en="Search...">
+      </div>
+      <button onclick="toggleLang()" id="langBtn" class="mono text-[11px] xl:text-xs px-2 py-1 xl:px-3 xl:py-1.5 rounded-lg border border-white/10 text-slate-300 hover:text-cyan-400 transition-all bg-transparent cursor-pointer font-bold">EN</button>
+      <button onclick="toggleTheme()" class="text-lg xl:text-xl hover:scale-110 transition-transform cursor-pointer bg-transparent border-none outline-none" id="themeBtn" title="ប្តូរពណ៌ផ្ទៃ">☀️</button>
+      <button onclick="handleLoginClick()" id="loginBtn" class="glass hidden lg:flex px-3 py-1.5 xl:px-4 xl:py-2 rounded-full text-[12px] xl:text-sm font-bold text-white hover:border-cyan-400 transition-colors khmer cursor-pointer items-center gap-2 lang-text uppercase" data-km="<span>👤</span> ចូលគណនី" data-en="<span>👤</span> LOGIN"><span>👤</span> ចូលគណនី</button>
+      <button onclick="showApiModal()" class="mono text-[11px] xl:text-xs px-2 py-1 xl:px-3 xl:py-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-cyan-400 hover:border-cyan-400/50 transition-all bg-transparent cursor-pointer hidden sm:block">⚙ API</button>
+      <button onclick="toggleMobileMenu()" class="lg:hidden text-cyan-400 hover:text-white text-2xl ml-1 focus:outline-none cursor-pointer bg-transparent border-none">☰</button>
+    </div>
+  </div>
+</nav>
+
+<div id="mobileMenu" class="fixed inset-0 bg-[#020205]/98 backdrop-blur-xl z-[100] hidden flex-col items-center justify-center gap-5 text-base border-cyan-500/30 transition-colors duration-300">
+  <button onclick="toggleMobileMenu()" class="absolute top-5 right-5 text-white text-4xl focus:outline-none cursor-pointer bg-transparent border-none">✕</button>
+  <div class="flex relative mb-2 w-3/4">
+    <input type="text" id="mobileSearchInput" placeholder="ស្វែងរក..." oninput="handleGlobalSearch(this.value)" onkeypress="if(event.key==='Enter') { handleGlobalSearchEnter(this.value); toggleMobileMenu(); }" class="lang-placeholder bg-black/60 border border-white/20 rounded-full pl-4 pr-8 py-3 text-sm text-white outline-none focus:border-cyan-500/50 khmer w-full transition-all" data-km="ស្វែងរក..." data-en="Search...">
+  </div>
+  <button onclick="showPage('about'); toggleMobileMenu();" class="text-white hover:text-cyan-400 khmer-title font-bold text-lg cursor-pointer bg-transparent border-none lang-text uppercase" data-km="អំពីយើងខ្ញុំ" data-en="ABOUT US">អំពីយើងខ្ញុំ</button>
+  <button onclick="showPage('tests'); toggleMobileMenu();" class="text-white hover:text-cyan-400 khmer-title font-bold text-lg cursor-pointer bg-transparent border-none lang-text uppercase" data-km="តេស្តដើម្បីស្គាល់ខ្លួនឯង" data-en="SELF-DISCOVERY TEST">តេស្តដើម្បីស្គាល់ខ្លួនឯង</button>
+  <button onclick="showPage('careers'); toggleMobileMenu();" class="text-white hover:text-cyan-400 khmer-title font-bold text-lg cursor-pointer bg-transparent border-none lang-text uppercase" data-km="ទីផ្សារការងារ" data-en="JOB MARKET">ទីផ្សារការងារ</button>
+  <button onclick="showPage('dashboard'); toggleMobileMenu();" class="text-white hover:text-cyan-400 khmer-title font-bold text-lg cursor-pointer bg-transparent border-none lang-text uppercase" data-km="ផែនទីអនាគត" data-en="FUTURE ROADMAP">ផែនទីអនាគត</button>
+  <button onclick="showPage('schools'); toggleMobileMenu();" class="text-white hover:text-cyan-400 khmer-title font-bold text-lg cursor-pointer bg-transparent border-none lang-text uppercase" data-km="🏫 គ្រឹះស្ថាន TVET" data-en="🏫 TVET INSTITUTES">🏫 គ្រឹះស្ថាន TVET</button>
+  <button onclick="showPage('seminar'); toggleMobileMenu();" class="text-white hover:text-cyan-400 khmer-title font-bold text-lg cursor-pointer bg-transparent border-none lang-text uppercase" data-km="🎟️ សិក្ខាសាលា" data-en="🎟️ SEMINARS">🎟️ សិក្ខាសាលា</button>
+  <button onclick="showPage('resources'); toggleMobileMenu();" class="text-slate-300 hover:text-cyan-400 khmer-title text-lg cursor-pointer bg-transparent border-none lang-text uppercase" data-km="📰 ព័ត៌មាន / 📝 CV" data-en="📰 NEWS / 📝 CV">📰 ព័ត៌មាន / 📝 CV</button>
+  
+  <div class="h-px w-3/4 bg-white/10 my-2"></div>
+  <button onclick="toggleLang()" id="mobileLangBtn" class="text-cyan-400 hover:text-white khmer text-lg font-bold cursor-pointer bg-transparent border-none flex items-center gap-2">🇬🇧 English</button>
+  <button onclick="toggleTheme()" id="mobileThemeBtn" class="text-slate-300 hover:text-cyan-400 khmer text-lg cursor-pointer bg-transparent border-none flex items-center gap-2 lang-text uppercase" data-km="☀️ ម៉ូតភ្លឺ" data-en="☀️ LIGHT MODE">☀️ ម៉ូតភ្លឺ</button>
+  <button onclick="handleLoginClick(); toggleMobileMenu();" id="mobileLoginBtn" class="btn-neon px-10 py-3 rounded-full text-sm font-bold text-white khmer cursor-pointer mt-2 lang-text uppercase" data-km="👤 ចូលគណនី" data-en="👤 LOGIN">👤 ចូលគណនី</button>
+</div>
+
+<div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 hidden"><div class="glass rounded-xl px-5 py-3 text-base text-white border border-cyan-500/50 khmer shadow-lg"></div></div>
+
+<div id="apiModal" class="fixed inset-0 z-50 flex items-center justify-center hidden"><div class="modal-overlay absolute inset-0" onclick="hideApiModal()"></div><div class="glass relative z-10 rounded-2xl p-8 w-full max-w-md mx-4 border border-cyan-500/30"><h3 class="font-bold text-xl mb-2 grad-text khmer-title">🔑 Gemini API Key</h3><input id="apiKeyInput" type="password" placeholder="AIzaSy..." class="w-full glass rounded-xl px-4 py-3 text-base text-slate-200 outline-none border border-white/10 focus:border-cyan-500/50 mono mb-4 bg-transparent"/><div class="flex gap-3"><button onclick="saveApiKey()" class="btn-neon flex-1 py-3 rounded-xl font-bold text-base khmer cursor-pointer lang-text" data-km="រក្សាទុក ✓" data-en="Save ✓">រក្សាទុក ✓</button><button onclick="hideApiModal()" class="glass flex-1 py-3 rounded-xl text-base khmer cursor-pointer text-white lang-text" data-km="បោះចោល" data-en="Cancel">បោះចោល</button></div></div></div>
+
+<div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center hidden"><div class="modal-overlay absolute inset-0" onclick="hideLoginModal()"></div><div class="glass relative z-10 rounded-3xl p-8 w-full max-w-sm mx-4 border border-cyan-500/40 bg-[#060612]/95 text-center"><div class="text-5xl mb-4">🔐</div><h3 class="font-bold text-3xl mb-2 text-white khmer-title lang-text" data-km="ចូលប្រើប្រាស់គណនី" data-en="Sign In">ចូលប្រើប្រាស់គណនី</h3><p class="text-slate-400 text-base khmer mb-8 leading-relaxed lang-text" data-km="ចូលគណនីតាម Google ដើម្បីរក្សាទុកពិន្ទុតេស្ត និងកញ្ចប់សេវាកម្មរបស់អ្នកដោយស្វ័យប្រវត្តិ។" data-en="Sign in with Google to automatically save your test scores and premium plan.">ចូលគណនីតាម Google ដើម្បីរក្សាទុកពិន្ទុតេស្ត និងកញ្ចប់សេវាកម្មរបស់អ្នកដោយស្វ័យប្រវត្តិ។</p><button onclick="handleGoogleLogin()" class="w-full bg-white text-black font-bold py-3.5 rounded-xl text-base transition-transform hover:scale-105 cursor-pointer flex items-center justify-center gap-3 mb-4"><svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg><span class="khmer lang-text" data-km="បន្តជាមួយ Google" data-en="Continue with Google">បន្តជាមួយ Google</span></button></div></div>
+
+<div id="paymentModal" class="fixed inset-0 z-[60] flex items-center justify-center hidden">
+  <div class="modal-overlay absolute inset-0" onclick="hidePaymentModal()"></div>
+  <div class="glass relative z-10 rounded-3xl p-5 md:p-8 w-full max-w-lg mx-4 border border-purple-500/40 bg-[#060612]/95 text-center overflow-y-auto" style="max-height:92vh">
+
+    <!-- ចំណងជើង -->
+    <div class="mb-4">
+      <h3 class="font-bold text-2xl md:text-4xl mb-2 grad-text khmer-title lang-text" data-km="ដោះសោរបាយការណ៍អាជីព" data-en="Unlock Career Report">ដោះសោរបាយការណ៍អាជីព</h3>
+      <p class="text-slate-300 text-sm md:text-base khmer leading-relaxed lang-text" data-km="បង់ $2 តែម្ដង — មើលរបាយការណ៍ពេញ + AI Chat គ្មានកំណត់!" data-en="Pay $2 once — Full report + unlimited AI Chat!">បង់ $2 តែម្ដង — មើលរបាយការណ៍ពេញ + AI Chat គ្មានកំណត់!</p>
+    </div>
+
+    <!-- ជំហានណែនាំ -->
+    <div class="glass border border-white/10 rounded-2xl p-4 mb-4 text-left space-y-2.5">
+      <p class="text-cyan-400 font-bold khmer-title text-sm mb-1 lang-text" data-km="📋 ជំហានបង់ប្រាក់ (៤ ជំហាន)" data-en="📋 Payment Steps (4 Steps)">📋 ជំហានបង់ប្រាក់ (៤ ជំហាន)</p>
+      <div class="flex items-start gap-3">
+        <span class="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs font-black shrink-0 mt-0.5">១</span>
+        <p class="text-slate-300 text-sm khmer lang-text leading-relaxed" data-km="ស្កេន KHQR ខាងក្រោម ហើយបង់ <strong class='text-cyan-400'>$2.00</strong>" data-en="Scan KHQR below and pay <strong class='text-cyan-400'>$2.00</strong>">ស្កេន KHQR ខាងក្រោម ហើយបង់ <strong class="text-cyan-400">$2.00</strong></p>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs font-black shrink-0 mt-0.5">២</span>
+        <p class="text-slate-300 text-sm khmer lang-text leading-relaxed" data-km="ចុចប៊ូតុង <strong class='text-purple-400'>[Copy UID]</strong> ខាងក្រោម" data-en="Click <strong class='text-purple-400'>[Copy UID]</strong> button below">ចុចប៊ូតុង <strong class="text-purple-400">[Copy UID]</strong> ខាងក្រោម</p>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 flex items-center justify-center text-xs font-black shrink-0 mt-0.5">៣</span>
+        <p class="text-slate-300 text-sm khmer lang-text leading-relaxed" data-km="ចុច <strong class='text-pink-400'>[ផ្ញើ Slip ទៅ Bot]</strong> → ផ្ញើ Screenshot + Paste UID" data-en="Click <strong class='text-pink-400'>[Send Slip to Bot]</strong> → Send Screenshot + Paste UID">ចុច <strong class="text-pink-400">[ផ្ញើ Slip ទៅ Bot]</strong> → ផ្ញើ Screenshot + Paste UID</p>
+      </div>
+      <div class="flex items-start gap-3">
+        <span class="w-6 h-6 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-xs font-black shrink-0 mt-0.5">៤</span>
+        <p class="text-slate-300 text-sm khmer lang-text leading-relaxed" data-km="រង់ចាំ 5-15 នាទី → <strong class='text-green-400'>Refresh Website → Unlock! 🎉</strong>" data-en="Wait 5-15 min → <strong class='text-green-400'>Refresh Website → Unlock! 🎉</strong>">រង់ចាំ 5-15 នាទី → <strong class="text-green-400">Refresh Website → Unlock! 🎉</strong></p>
+      </div>
+    </div>
+
+    <!-- KHQR Box -->
+    <div class="glass border border-cyan-500/30 rounded-2xl p-5 flex flex-col items-center mb-4">
+      <h4 class="text-white text-base font-bold khmer-title lang-text mb-2" data-km="បង់ប្រាក់តាមរយៈ KHQR" data-en="Pay via KHQR">បង់ប្រាក់តាមរយៈ KHQR</h4>
+      <span class="text-3xl font-black text-cyan-400 mb-3">$2.00</span>
+      <div class="bg-white p-2 rounded-xl w-44 h-44 md:w-48 md:h-48 mb-4">
+        <img src="my-khqr.png" onerror="this.src='https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=https://t.me/Counsellerkh_bot&choe=UTF-8'" class="w-full h-full object-contain" alt="KHQR">
+      </div>
+
+      <!-- UID Box -->
+      <div class="w-full rounded-xl p-3 mb-3 border border-purple-500/30 bg-purple-500/5">
+        <p class="text-xs text-slate-400 khmer mb-1.5 lang-text" data-km="👤 User ID របស់អ្នក — ផ្ញើទៅ Bot ផងដែរ" data-en="👤 Your User ID — Also send to Bot">👤 User ID របស់អ្នក — ផ្ញើទៅ Bot ផងដែរ</p>
+        <div class="flex items-center justify-between gap-2">
+          <span class="font-bold mono text-sm truncate text-purple-300" id="modalUidValue">— Login ជាមុន —</span>
+          <button onclick="copyUID()" class="shrink-0 text-xs bg-purple-500/20 hover:bg-purple-500/40 text-purple-300 px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer border border-purple-500/30 lang-text" data-km="📋 Copy" data-en="📋 Copy">📋 Copy</button>
+        </div>
+      </div>
+
+      <!-- Bot Button -->
+      <a href="https://t.me/Counsellerkh_bot" target="_blank"
+         class="btn-neon w-full py-3.5 rounded-xl font-bold text-sm md:text-base khmer lang-text no-underline flex items-center justify-center gap-2 text-black hover:text-black"
+         data-km="📤 ផ្ញើ Slip ទៅ @Counsellerkh_bot" data-en="📤 Send Slip to @Counsellerkh_bot">
+        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-1.97 9.289c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.19 13.837l-2.965-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.631 1.749z"/></svg>
+        📤 ផ្ញើ Slip ទៅ @Counsellerkh_bot
+      </a>
+    </div>
+
+    <button onclick="hidePaymentModal()" class="text-slate-400 hover:text-white khmer text-sm underline cursor-pointer lang-text bg-transparent border-none py-2" data-km="បិទផ្ទាំងនេះសិន" data-en="Close this window">បិទផ្ទាំងនេះសិន</button>
+  </div>
+</div>
+
+<div id="aiExpertModal" class="fixed inset-0 z-[70] hidden flex-col items-center justify-center bg-[#020205]/98 backdrop-blur-xl transition-colors duration-300" style="display:none">
+    <div class="w-full max-w-4xl h-full md:h-[90vh] glass md:rounded-3xl border border-white/10 shadow-[0_0_40px_rgba(0,240,255,0.1)] flex flex-col relative bg-[#020205]/80 md:mx-4 md:my-auto">
+        <button onclick="closeAiExpert()" class="absolute top-3 right-3 md:top-4 md:right-4 text-slate-400 hover:text-white text-3xl md:text-4xl cursor-pointer z-10 w-11 h-11 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">✕</button>
+        
+        <div class="p-4 sm:p-6 md:p-8 border-b border-white/10 text-center shrink-0">
+            <div class="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-full flex items-center justify-center text-2xl sm:text-3xl mb-2 sm:mb-4 shadow-[0_0_20px_rgba(0,240,255,0.3)]" id="expertIcon" style="background:linear-gradient(135deg,#00f0ff,#b44fff)">🤖</div>
+            <h2 class="font-bold text-xl sm:text-3xl md:text-4xl text-white khmer-title mb-1 sm:mb-2" id="expertTitle">អ្នកជំនាញ</h2>
+            <p class="text-cyan-400 text-sm sm:text-base khmer lang-text" data-km="ទីប្រឹក្សាអាជីព AI ប្រចាំវិស័យ" data-en="AI Career Counselor for this Sector">ទីប្រឹក្សាអាជីព AI ប្រចាំវិស័យ</p>
+        </div>
+
+        <div id="expertChatMessages" class="flex-1 overflow-y-auto p-3 sm:p-5 md:p-8 space-y-4" style="-webkit-overflow-scrolling:touch">
+        </div>
+
+        <div class="p-3 sm:p-5 border-t border-white/10 bg-black/20 shrink-0" style="padding-bottom:max(0.75rem,env(safe-area-inset-bottom,0.75rem))">
+            <div class="flex justify-between items-center mb-2 px-1">
+                <span class="text-xs sm:text-sm text-slate-400 khmer font-bold" id="expertMsgCounterDisplay">សំណួរឥតគិតថ្លៃ៖ ០/១០</span>
+                <button onclick="clearExpertChat()" class="text-xs sm:text-sm text-slate-500 hover:text-white khmer lang-text px-2 py-1" data-km="ជម្រះការសន្ទនា" data-en="Clear Chat">ជម្រះការសន្ទនា</button>
+            </div>
+            <div class="flex gap-2 sm:gap-4">
+                <input id="expertChatInput" type="text" placeholder="សួរសំណួររបស់អ្នកទីនេះ..." class="lang-placeholder flex-1 bg-black/40 rounded-2xl px-3 sm:px-5 py-3 sm:py-4 text-base text-slate-200 outline-none border border-white/10 focus:border-cyan-500/50 khmer min-w-0" onkeypress="if(event.key === 'Enter') sendExpertMessage()" data-km="សួរសំណួររបស់អ្នកទីនេះ..." data-en="Ask your question here..."/>
+                <button onclick="sendExpertMessage()" id="expertSendBtn" class="btn-neon w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center font-bold text-xl sm:text-2xl cursor-pointer shrink-0">→</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<main>
+<div id="page-about" class="page">
+  <div class="min-h-screen pt-28 pb-20 px-4 max-w-5xl mx-auto">
+    <div class="text-center mb-10">
+      <div class="mb-6">
+        <span class="section-badge mono khmer inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-sm md:text-base text-cyan-400 lang-text" data-km="🇰🇭 បញ្ញាសិប្បនិមិត្ត · ប្រព័ន្ធវាយតម្លៃស្តង់ដារ" data-en="🇰🇭 AI · STANDARD ASSESSMENT">🇰🇭 បញ្ញាសិប្បនិមិត្ត · ប្រព័ន្ធវាយតម្លៃស្តង់ដារ</span>
+      </div>
+      <h1 class="font-bold text-4xl md:text-6xl grad-text khmer-title lang-text uppercase" data-km="អំពីយើងខ្ញុំ" data-en="ABOUT US">អំពីយើងខ្ញុំ</h1>
+      <p class="text-slate-400 khmer max-w-2xl mx-auto leading-relaxed text-base md:text-lg mt-6 lang-text text-left md:text-center" data-km="ស្វែងយល់បន្ថែមពីប្រវត្តិ គោលបំណង និងការប្តេជ្ញាចិត្តរបស់យើងក្នុងការជួយយុវជនកម្ពុជា។" data-en="Learn more about our history, goals, and commitment to helping Cambodian youth.">ស្វែងយល់បន្ថែមពីប្រវត្តិ គោលបំណង និងការប្តេជ្ញាចិត្តរបស់យើងក្នុងការជួយយុវជនកម្ពុជា។</p>
+    </div>
+    
+    <div class="glass p-6 md:p-10 rounded-3xl border border-cyan-500/30 relative overflow-hidden mb-8 shadow-[0_0_40px_rgba(0,240,255,0.1)]">
+      <div class="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 blur-3xl rounded-full pointer-events-none"></div>
+      
+      <div class="w-full max-w-4xl mx-auto aspect-[21/9] bg-black/50 rounded-2xl border border-white/10 flex items-center justify-center overflow-hidden mb-10 relative">
+         <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80" alt="About Us Banner" class="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity">
+      </div>
+      
+      <div class="grid md:grid-cols-2 gap-8">
+        <div class="glass p-8 rounded-2xl border border-purple-500/30 bg-purple-500/5 text-left">
+          <div class="w-14 h-14 rounded-full bg-purple-500/20 flex items-center justify-center text-3xl mb-6">👁️</div>
+          <h2 class="text-3xl font-bold text-white khmer-title mb-4 lang-text" data-km="ចក្ខុវិស័យ (Vision)" data-en="VISION">ចក្ខុវិស័យ (Vision)</h2>
+          <p class="text-slate-300 khmer text-base leading-relaxed lang-text" data-km="ដើម្បីក្លាយជាប្រព័ន្ធប្រឹក្សាអាជីពបែបឌីជីថលឈានមុខគេនៅកម្ពុជា ដែលជួយជំរុញយុវជនគ្រប់រូបឱ្យស្វែងរកឃើញសក្តានុពលពិតប្រាកដរបស់ពួកគេ និងកសាងអនាគតដ៏ត្រចះត្រចង់។" data-en="To become the leading digital career counseling platform in Cambodia, empowering every youth to discover their true potential and build a bright future.">ដើម្បីក្លាយជាប្រព័ន្ធប្រឹក្សាអាជីពបែបឌីជីថលឈានមុខគេនៅកម្ពុជា ដែលជួយជំរុញយុវជនគ្រប់រូបឱ្យស្វែងរកឃើញសក្តានុពលពិតប្រាកដរបស់ពួកគេ និងកសាងអនាគតដ៏ត្រចះត្រចង់។</p>
+        </div>
+        
+        <div class="glass p-8 rounded-2xl border border-cyan-500/30 bg-cyan-500/5 text-left">
+          <div class="w-14 h-14 rounded-full bg-cyan-500/20 flex items-center justify-center text-3xl mb-6">🎯</div>
+          <h2 class="text-3xl font-bold text-white khmer-title mb-4 lang-text" data-km="បេសកកម្ម (Mission)" data-en="MISSION">បេសកកម្ម (Mission)</h2>
+          <p class="text-slate-300 khmer text-base leading-relaxed lang-text" data-km="ផ្តល់ជូននូវឧបករណ៍វាយតម្លៃស្តង់ដារ និងទីប្រឹក្សា AI ដ៏ឆ្លាតវៃ ដើម្បីផ្តល់ការណែនាំចំគោលដៅ ជួយសិស្សានុសិស្សក្នុងការសម្រេចចិត្តជ្រើសរើសជំនាញសិក្សា និងអាជីពការងារបានយ៉ាងត្រឹមត្រូវ។" data-en="To provide standard assessment tools and an intelligent AI counselor to deliver targeted guidance, helping students make the right choices in their studies and careers.">ផ្តល់ជូននូវឧបករណ៍វាយតម្លៃស្តង់ដារ និងទីប្រឹក្សា AI ដ៏ឆ្លាតវៃ ដើម្បីផ្តល់ការណែនាំចំគោលដៅ ជួយសិស្សានុសិស្សក្នុងការសម្រេចចិត្តជ្រើសរើសជំនាញសិក្សា និងអាជីពការងារបានយ៉ាងត្រឹមត្រូវ។</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="page-home" class="page active">
+  <section class="relative min-h-screen pt-28 pb-20 overflow-hidden">
+    <div class="orb w-96 h-96 top-10 left-0" style="background:#00f0ff"></div>
+    <div class="orb w-80 h-80 bottom-10 right-0" style="background:#b44fff"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 flex flex-col md:flex-row gap-8 md:gap-12 items-center justify-center">
+      
+      <div class="text-left w-full md:w-1/2">
+        <div class="mb-4 sm:mb-6">
+            <span class="section-badge mono khmer inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-xs sm:text-sm md:text-base text-cyan-400 lang-text" data-km="🇰🇭 បញ្ញាសិប្បនិមិត្ត · ប្រព័ន្ធវាយតម្លៃស្តង់ដារ" data-en="🇰🇭 AI · STANDARD ASSESSMENT SYSTEM">🇰🇭 បញ្ញាសិប្បនិមិត្ត · ប្រព័ន្ធវាយតម្លៃស្តង់ដារ</span>
+        </div>
+        <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-3 sm:mb-4">
+          <span class="khmer text-white lang-text" data-km="សូមស្វាគមន៍មកកាន់" data-en="Welcome to">សូមស្វាគមន៍មកកាន់</span><br>
+          <span class="grad-text khmer-title lang-text" data-km="វិថីឆ្ពោះទៅកាន់អាជីពខ្ញុំ" data-en="MY CAREER PATH">វិថីឆ្ពោះទៅកាន់អាជីពខ្ញុំ</span>
+        </h1>
+        <p class="text-slate-300 text-base sm:text-lg md:text-xl leading-relaxed khmer mt-3 mb-6 sm:mb-8 max-w-lg lang-text text-left" data-km="ប្រើប្រាស់បច្ចេកវិទ្យា AI ដ៏ឆ្លាតវៃ និងកម្រងសំណួរស្តង់ដារ ដើម្បីជួយស្វែងយល់ពីសក្តានុពលពិតរបស់អ្នក ហើយជ្រើសរើសជំនាញដែលត្រឹមត្រូវបំផុតសម្រាប់អនាគត។" data-en="Utilize smart AI technology and standard questionnaires to discover your true potential and choose the best career path for your future.">ប្រើប្រាស់បច្ចេកវិទ្យា AI ដ៏ឆ្លាតវៃ និងកម្រងសំណួរស្តង់ដារ ដើម្បីជួយស្វែងយល់ពីសក្តានុពលពិតរបស់អ្នក ហើយជ្រើសរើសជំនាញដែលត្រឹមត្រូវបំផុតសម្រាប់អនាគត។</p>
+        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <button onclick="showPage('tests')" class="btn-neon px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-bold tracking-wide khmer-title cursor-pointer lang-text w-full sm:w-auto" data-km="✦ ចាប់ផ្តើមធ្វើតេស្ត" data-en="✦ START TESTING">✦ ចាប់ផ្តើមធ្វើតេស្ត</button>
+        </div>
+      </div>
+
+      <div class="relative flex flex-col gap-4 sm:gap-6 w-full max-w-md md:w-1/2 mx-auto justify-center">
+        <div class="glass p-2 rounded-3xl border border-purple-500/30 shadow-[0_0_40px_rgba(180,79,255,0.15)] relative overflow-hidden z-10 group cursor-pointer" onmouseenter="pauseCarousel()" onmouseleave="startCarousel()">
+          <div class="flex transition-transform duration-700 ease-in-out" style="height:clamp(160px,28vw,256px)" id="carouselTrack">
+            <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80" alt="Career" class="h-full object-cover rounded-2xl" style="width:100%;flex-shrink:0">
+            <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80" alt="Team" class="h-full object-cover rounded-2xl" style="width:100%;flex-shrink:0">
+            <img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=800&q=80" alt="Work" class="h-full object-cover rounded-2xl" style="width:100%;flex-shrink:0">
+          </div>
+          <div class="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+             <button onclick="goToSlide(0)" class="w-2 h-2 rounded-full bg-white transition-colors" id="dot0"></button>
+             <button onclick="goToSlide(1)" class="w-2 h-2 rounded-full bg-white/50 transition-colors" id="dot1"></button>
+             <button onclick="goToSlide(2)" class="w-2 h-2 rounded-full bg-white/50 transition-colors" id="dot2"></button>
+          </div>
+        </div>
+
+        <div class="glass p-2 rounded-3xl border border-cyan-500/30 shadow-[0_0_40px_rgba(0,240,255,0.15)] aspect-video relative overflow-hidden z-20">
+           <div class="absolute top-0 left-0 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-[12px] font-bold px-4 py-1 rounded-br-xl z-30 khmer pointer-events-none lang-text uppercase" data-km="▶️ វីដេអូណែនាំ" data-en="▶️ INTRO VIDEO">▶️ វីដេអូណែនាំ</div>
+           <iframe class="w-full h-full rounded-2xl" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="YouTube video" frameborder="0" allowfullscreen></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="page-tests" class="page"><div class="min-h-screen pt-28 pb-20 px-4 max-w-5xl mx-auto">
+  <div class="text-center mb-12">
+    <h1 class="font-bold text-4xl grad-text khmer-title mb-4 lang-text uppercase" data-km="តេស្តដើម្បីស្គាល់ខ្លួនឯង" data-en="SELF-DISCOVERY TEST">តេស្តដើម្បីស្គាល់ខ្លួនឯង</h1>
+    <p class="text-slate-400 khmer max-w-2xl mx-auto leading-relaxed text-base md:text-lg lang-text text-left md:text-center mt-6" data-km="សូមធ្វើការវាយតម្លៃតាមលំដាប់លំដោយ។ ប្រព័ន្ធនឹងធ្វើការគណនាពិន្ទុ និងផ្គូផ្គងអ្នកទៅនឹងវិស័យការងារទាំង ១៦ ដោយស្វ័យប្រវត្តិ។" data-en="Please complete the assessments in order. The system will auto-calculate and match you to 16 career clusters.">សូមធ្វើការវាយតម្លៃតាមលំដាប់លំដោយ។ ប្រព័ន្ធនឹងធ្វើការគណនាពិន្ទុ និងផ្គូផ្គងអ្នកទៅនឹងវិស័យការងារទាំង ១៦ ដោយស្វ័យប្រវត្តិ។</p>
+  </div>
+  
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+    <div class="test-card glass p-6 md:p-8 rounded-3xl border border-cyan-500/40 flex flex-col cursor-pointer" onclick="openTestIntro('interest')"><div class="flex items-center justify-between mb-4"><div class="w-14 h-14 rounded-full flex items-center justify-center text-3xl bg-cyan-500/15">❤️</div><span class="text-xs bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded mono lang-text" data-km="ឥតគិតថ្លៃ" data-en="Free">ឥតគិតថ្លៃ</span></div><h2 class="text-2xl font-bold text-white khmer-title mb-3 lang-text" data-km="១. តេស្តចំណូលចិត្ត" data-en="1. Interest Test">១. តេស្តចំណូលចិត្ត</h2><p class="text-slate-400 khmer text-sm mb-6 flex-1 leading-relaxed lang-text text-left" data-km="វាយតម្លៃចំណង់ចំណូលចិត្តរបស់អ្នកលើសកម្មភាពផ្សេងៗ (៩៦ សំណួរ)។" data-en="Evaluate your interest in various activities (96 questions).">វាយតម្លៃចំណង់ចំណូលចិត្តរបស់អ្នកលើសកម្មភាពផ្សេងៗ (៩៦ សំណួរ)។</p><div class="flex items-center justify-between border-t border-white/10 pt-4"><span class="text-sm text-slate-500 khmer lang-text" id="status-interest" data-km="មិនទាន់ធ្វើតេស្ត" data-en="Not Taken">មិនទាន់ធ្វើតេស្ត</span><span class="text-cyan-400 text-base font-bold lang-text" data-km="ចាប់ផ្តើម →" data-en="Start →">ចាប់ផ្តើម →</span></div></div>
+    
+    <div class="test-card glass p-6 md:p-8 rounded-3xl border border-white/10 flex flex-col relative cursor-pointer" onclick="openTestIntro('skill')"><div class="absolute top-4 right-4 text-pink-500 text-xl" id="lock-skill">🔒</div><div class="w-14 h-14 rounded-full flex items-center justify-center text-3xl bg-purple-500/15 mb-4">🧠</div><h2 class="text-2xl font-bold text-white khmer-title mb-3 lang-text" data-km="២. តេស្តជំនាញ" data-en="2. Skill Test">២. តេស្តជំនាញ</h2><p class="text-slate-400 khmer text-sm mb-6 flex-1 leading-relaxed lang-text text-left" data-km="វាយតម្លៃសមត្ថភាព និងភាពខ្លាំងពីកំណើតរបស់អ្នក (១៦០ សំណួរ)។" data-en="Evaluate your abilities and natural strengths (160 questions).">វាយតម្លៃសមត្ថភាព និងភាពខ្លាំងពីកំណើតរបស់អ្នក (១៦០ សំណួរ)។</p><div class="flex items-center justify-between border-t border-white/10 pt-4"><span class="text-sm text-slate-500 khmer lang-text" id="status-skill" data-km="មិនទាន់ធ្វើតេស្ត" data-en="Not Taken">មិនទាន់ធ្វើតេស្ត</span><span class="text-purple-400 text-base font-bold lang-text" data-km="ចាប់ផ្តើម →" data-en="Start →">ចាប់ផ្តើម →</span></div></div>
+    
+    <div class="test-card glass p-6 md:p-8 rounded-3xl border border-white/10 flex flex-col relative cursor-pointer" onclick="openTestIntro('value')"><div class="absolute top-4 right-4 text-pink-500 text-xl" id="lock-value">🔒</div><div class="w-14 h-14 rounded-full flex items-center justify-center text-3xl bg-emerald-500/15 mb-4">⭐</div><h2 class="text-2xl font-bold text-white khmer-title mb-3 lang-text" data-km="៣. តេស្តគុណតម្លៃ" data-en="3. Value Test">៣. តេស្តគុណតម្លៃ</h2><p class="text-slate-400 khmer text-sm mb-6 flex-1 leading-relaxed lang-text text-left" data-km="វាយតម្លៃពីបរិយាកាសការងារ និងឧត្តមគតិដែលអ្នកចង់បាន (៦០ សំណួរ)។" data-en="Evaluate your desired work environment and ideals (60 questions).">វាយតម្លៃពីបរិយាកាសការងារ និងឧត្តមគតិដែលអ្នកចង់បាន (៦០ សំណួរ)។</p><div class="flex items-center justify-between border-t border-white/10 pt-4"><span class="text-sm text-slate-500 khmer lang-text" id="status-value" data-km="មិនទាន់ធ្វើតេស្ត" data-en="Not Taken">មិនទាន់ធ្វើតេស្ត</span><span class="text-emerald-400 text-base font-bold lang-text" data-km="ចាប់ផ្តើម →" data-en="Start →">ចាប់ផ្តើម →</span></div></div>
+    
+    <div class="test-card glass p-6 md:p-8 rounded-3xl border border-white/10 flex flex-col relative cursor-pointer" onclick="openTestIntro('personality')"><div class="absolute top-4 right-4 text-pink-500 text-xl" id="lock-personality">🔒</div><div class="w-14 h-14 rounded-full flex items-center justify-center text-3xl bg-orange-500/15 mb-4">🎭</div><h2 class="text-2xl font-bold text-white khmer-title mb-3 lang-text" data-km="៤. តេស្តបុគ្គលិកលក្ខណៈ" data-en="4. Personality Test">៤. តេស្តបុគ្គលិកលក្ខណៈ</h2><p class="text-slate-400 khmer text-sm mb-6 flex-1 leading-relaxed lang-text text-left" data-km="ស្វែងយល់ពីអត្តចរិត និងការប្រាស្រ័យទាក់ទងរបស់អ្នក (១៨ សំណួរ)។" data-en="Understand your traits and communication style (18 questions).">ស្វែងយល់ពីអត្តចរិត និងការប្រាស្រ័យទាក់ទងរបស់អ្នក (១៨ សំណួរ)។</p><div class="flex items-center justify-between border-t border-white/10 pt-4"><span class="text-sm text-slate-500 khmer lang-text" id="status-personality" data-km="មិនទាន់ធ្វើតេស្ត" data-en="Not Taken">មិនទាន់ធ្វើតេស្ត</span><span class="text-orange-400 text-base font-bold lang-text" data-km="ចាប់ផ្តើម →" data-en="Start →">ចាប់ផ្តើម →</span></div></div>
+    
+    <div class="test-card glass p-6 md:p-8 rounded-3xl border border-pink-500/30 flex flex-col relative md:col-span-2 lg:col-span-2 shadow-[0_0_20px_rgba(255,45,155,0.1)] cursor-pointer" onclick="generateFinalReport()"><div class="absolute top-4 right-4 text-pink-500 text-xl" id="lock-report">🔒</div><div class="flex items-center gap-4 mb-2"><div class="w-16 h-16 rounded-full flex items-center justify-center text-4xl bg-pink-500/20">📊</div><div><h2 class="text-3xl font-bold text-white khmer-title lang-text" data-km="៥. របាយការណ៍លទ្ធផល" data-en="5. Final Report">៥. របាយការណ៍លទ្ធផល</h2><p class="text-slate-400 khmer text-base lang-text" data-km="គណនាសរុប និងការផ្តល់យោបល់អាជីពចុងក្រោយ" data-en="Total calculation and final career advice">គណនាសរុប និងការផ្តល់យោបល់អាជីពចុងក្រោយ</p></div></div><p class="text-slate-300 khmer text-base mt-4 mb-4 leading-relaxed lang-text text-left" data-km="ប្រព័ន្ធនឹងប្រមូលពិន្ទុពីតេស្តទាំង ៤ ខាងលើ ដើម្បីគណនារកវិស័យការងារកំពូលទាំង ៣ និងផ្តល់ការសន្និដ្ឋានណែនាំអាជីពដែលស័ក្តិសមបំផុតសម្រាប់អ្នក។" data-en="The system will collect scores from the 4 tests to calculate your Top 3 career clusters and provide tailored recommendations.">ប្រព័ន្ធនឹងប្រមូលពិន្ទុពីតេស្តទាំង ៤ ខាងលើ ដើម្បីគណនារកវិស័យការងារកំពូលទាំង ៣ និងផ្តល់ការសន្និដ្ឋានណែនាំអាជីពដែលស័ក្តិសមបំផុតសម្រាប់អ្នក។</p><button class="mt-auto bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white py-4 rounded-xl font-bold text-lg khmer-title transition-transform hover:scale-[1.02] lang-text" data-km="មើលលទ្ធផលនៃការវាយតម្លៃ →" data-en="View Assessment Results →">មើលលទ្ធផលនៃការវាយតម្លៃ →</button></div>
+  </div>
+</div></div>
+
+<div id="page-quiz" class="page"><div class="min-h-screen pt-20 sm:pt-28 pb-20 px-3 sm:px-4 flex justify-center">
+  <div class="w-full max-w-4xl">
+    <div id="quiz-intro" class="glass p-5 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl border border-cyan-500/30">
+      <h2 id="intro-title" class="font-bold text-2xl sm:text-3xl md:text-4xl grad-text khmer-title mb-4 sm:mb-6">សេចក្តីណែនាំ</h2>
+      <div id="intro-desc" class="text-slate-300 khmer text-sm sm:text-base md:text-xl leading-relaxed space-y-3 sm:space-y-4 mb-6 sm:mb-10 text-left"></div>
+      <button onclick="startQuizEngine()" class="btn-neon w-full py-4 sm:py-5 rounded-xl sm:rounded-2xl font-bold text-base sm:text-xl khmer-title cursor-pointer lang-text" data-km="យល់ព្រម និងចាប់ផ្តើម ✓" data-en="Agree & Start ✓">យល់ព្រម និងចាប់ផ្តើម ✓</button>
+      <button onclick="showPage('tests')" class="w-full mt-4 sm:mt-6 py-3 sm:py-4 text-slate-400 hover:text-white khmer text-base sm:text-lg cursor-pointer lang-text bg-transparent border-none" data-km="← ត្រឡប់ក្រោយ" data-en="← Go Back">← ត្រឡប់ក្រោយ</button>
+    </div>
+    <div id="quiz-engine" class="hidden glass p-4 sm:p-6 md:p-12 rounded-2xl sm:rounded-3xl border border-white/10 shadow-[0_0_40px_rgba(0,240,255,0.1)]">
+      <div class="flex justify-between items-center mb-4 sm:mb-8">
+        <span class="text-cyan-400 text-xs sm:text-base md:text-lg font-bold khmer bg-cyan-400/10 px-3 sm:px-5 py-1.5 sm:py-2 rounded-full" id="quiz-progress-text">សំណួរទី ១/១០</span>
+        <button onclick="showPage('tests')" class="text-slate-500 hover:text-white text-3xl sm:text-4xl cursor-pointer w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">✕</button>
+      </div>
+      <div class="w-full bg-white/5 h-2 sm:h-4 rounded-full mb-5 sm:mb-10 overflow-hidden"><div id="quiz-progress-bar" class="bg-cyan-400 h-full w-0 transition-all duration-300"></div></div>
+      
+      <div id="quiz-prompt" class="text-cyan-400 text-sm sm:text-lg md:text-xl font-bold khmer mb-2 sm:mb-4 text-left"></div>
+      <div class="text-base sm:text-xl md:text-2xl lg:text-3xl text-white font-bold khmer mb-5 sm:mb-12 text-left leading-relaxed" id="question-text">...</div>
+      
+      <div class="grid grid-cols-1 gap-3 sm:gap-5 mb-5 sm:mb-12" id="options-container"></div>
+      
+      <div class="flex justify-between border-t border-white/10 pt-4 sm:pt-8 gap-3">
+        <button onclick="prevQuestion()" class="px-4 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl text-slate-300 hover:bg-white/5 khmer text-sm sm:text-lg md:text-xl border border-white/10 cursor-pointer lang-text flex-1 sm:flex-none" id="btn-prev" data-km="← ថយក្រោយ" data-en="← Previous">← ថយក្រោយ</button>
+        <button onclick="nextQuestion()" class="btn-neon px-4 sm:px-10 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold khmer-title text-sm sm:text-lg md:text-xl cursor-pointer lang-text flex-1 sm:flex-none" id="btn-next" data-km="បន្ទាប់ →" data-en="Next →">បន្ទាប់ →</button>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<div id="page-report" class="page"><div class="min-h-screen pt-20 sm:pt-28 pb-20 px-3 sm:px-4 max-w-5xl mx-auto">
+  <div class="glass p-5 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl border border-pink-500/50 relative overflow-hidden shadow-[0_0_50px_rgba(255,45,155,0.15)]">
+    <div class="text-center mb-6 sm:mb-12 relative z-10">
+      <div class="mb-3 sm:mb-4">
+          <span class="bg-pink-500/20 text-pink-400 text-xs sm:text-sm font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-pink-500/30 khmer lang-text" data-km="លទ្ធផលនៃការវាយតម្លៃ" data-en="Assessment Results">លទ្ធផលនៃការវាយតម្លៃ</span>
+      </div>
+      <h1 class="font-bold text-2xl sm:text-4xl md:text-5xl text-white mb-4 sm:mb-6 khmer-title lang-text uppercase" data-km="របាយការណ៍អាជីពរបស់អ្នក" data-en="YOUR CAREER REPORT">របាយការណ៍អាជីពរបស់អ្នក</h1>
+      <p class="text-slate-400 khmer text-sm sm:text-base md:text-lg max-w-2xl mx-auto lang-text text-left md:text-center" data-km="ផ្អែកលើការបូកសរុបពិន្ទុពីចំណូលចិត្ត ជំនាញ គុណតម្លៃ និងបុគ្គលិកលក្ខណៈរបស់អ្នក។" data-en="Based on the combined scores of your Interests, Skills, Values, and Personality.">ផ្អែកលើការបូកសរុបពិន្ទុពីចំណូលចិត្ត ជំនាញ គុណតម្លៃ និងបុគ្គលិកលក្ខណៈរបស់អ្នក។</p>
+    </div>
+    
+    <h3 class="font-bold text-white text-lg sm:text-2xl khmer-title mb-4 sm:mb-6 relative z-10 border-b border-white/10 pb-3 lang-text text-left" data-km="🎯 វិស័យការងារកំពូលទាំង ៣ (Matching Both)" data-en="🎯 Top 3 Career Clusters">🎯 វិស័យការងារកំពូលទាំង ៣ (Matching Both)</h3>
+    <div id="report-clusters" class="space-y-4 sm:space-y-5 relative z-10 mb-6 sm:mb-10 text-left"></div>
+    
+    <h3 class="font-bold text-white text-lg sm:text-2xl khmer-title mb-4 sm:mb-6 relative z-10 border-b border-white/10 pb-3 lang-text text-left" data-km="⭐ គុណតម្លៃ និងបុគ្គលិកលក្ខណៈលេចធ្លោ" data-en="⭐ Dominant Values & Personality">⭐ គុណតម្លៃ និងបុគ្គលិកលក្ខណៈលេចធ្លោ</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 relative z-10 mb-6 sm:mb-10 text-left">
+      <div id="report-value" class="glass p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border border-emerald-500/30 bg-emerald-500/5"></div>
+      <div id="report-personality" class="glass p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border border-orange-500/30 bg-orange-500/5"></div>
+    </div>
+
+    <h3 class="font-bold text-white text-lg sm:text-2xl khmer-title mb-4 sm:mb-6 relative z-10 border-b border-white/10 pb-3 lang-text text-left" data-km="💡 សេចក្តីសន្និដ្ឋាន និងការណែនាំអាជីពចុងក្រោយ" data-en="💡 Final Conclusion & Recommendations">💡 សេចក្តីសន្និដ្ឋាន និងការណែនាំអាជីពចុងក្រោយ</h3>
+    <div id="report-conclusion" class="glass p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-cyan-500/50 bg-cyan-500/5 text-left relative z-10 text-slate-200 khmer leading-relaxed text-sm sm:text-base md:text-xl"></div>
+
+    <div class="mt-6 sm:mt-10 text-center relative z-10">
+      <button onclick="toggleAllResults()" class="text-cyan-400 hover:text-white khmer text-sm sm:text-base md:text-lg underline mb-4 sm:mb-6 cursor-pointer lang-text bg-transparent border-none py-2" data-km="មើលពិន្ទុវិស័យការងារទាំង ១៦ របស់អ្នក" data-en="View all 16 Career Clusters Scores">មើលពិន្ទុវិស័យការងារទាំង ១៦ របស់អ្នក</button>
+      <div id="all-16-results" class="hidden grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 text-left mt-3 sm:mt-4 mb-6 sm:mb-10"></div>
+    </div>
+
+    <div class="mt-6 sm:mt-10 text-center relative z-10"><button onclick="showPage('tests')" class="glass px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl text-slate-300 hover:text-white khmer text-base sm:text-lg border border-white/20 cursor-pointer lang-text" data-km="← ត្រឡប់ទៅបញ្ជីតេស្ត" data-en="← Back to Tests List">← ត្រឡប់ទៅបញ្ជីតេស្ត</button></div>
+  </div>
+</div></div>
+
+<div id="page-careers" class="page"><div class="min-h-screen pt-24 pb-20 px-4 max-w-6xl mx-auto">
+  <div class="text-center mb-10">
+    <h1 class="font-bold text-4xl grad-text khmer-title mb-4 lang-text uppercase" data-km="វិស័យការងារទាំង ១៦" data-en="16 CAREER CLUSTERS">វិស័យការងារទាំង ១៦</h1>
+    <p class="text-slate-400 khmer max-w-2xl mx-auto leading-relaxed text-base md:text-lg mt-4 lang-text text-left md:text-center" data-km="ស្វែងយល់ពីបណ្ដុំវិស័យការងារ (Career Clusters) ដែលត្រូវបានទទួលស្គាល់ជាសកល។" data-en="Explore the globally recognized 16 Career Clusters.">ស្វែងយល់ពីបណ្ដុំវិស័យការងារ (Career Clusters) ដែលត្រូវបានទទួលស្គាល់ជាសកល។</p>
+  </div>
+  <div id="careerGrid" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-16 text-left"></div>
+
+  <div class="border-t border-white/10 pt-16 mb-10 text-center">
+    <h1 class="font-bold text-4xl grad-text khmer-title mb-4 lang-text uppercase" data-km="ស្វែងរកការងារនៅកម្ពុជា" data-en="FIND JOBS IN CAMBODIA">ស្វែងរកការងារនៅកម្ពុជា</h1>
+    <p class="text-slate-400 khmer max-w-2xl mx-auto leading-relaxed text-base mt-4 lang-text text-left md:text-center" data-km="បណ្តុំគេហទំព័រ និងភ្នាក់ងារជ្រើសរើសបុគ្គលិកធំៗ និងពេញនិយមបំផុតនៅក្នុងប្រទេសកម្ពុជា។" data-en="Collection of the largest and most popular recruitment websites in Cambodia.">បណ្តុំគេហទំព័រ និងភ្នាក់ងារជ្រើសរើសបុគ្គលិកធំៗ និងពេញនិយមបំផុតនៅក្នុងប្រទេសកម្ពុជា។</p>
+  </div>
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
+    <a href="https://www.camhr.com/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="w-14 h-14 shrink-0 rounded-full bg-white flex items-center justify-center text-xl font-bold text-blue-600">CHR</div>
+      <div><h3 class="text-white font-bold text-lg khmer-title group-hover:text-cyan-400 transition-colors">CamHR</h3><p class="text-sm text-slate-400 khmer">វេទិកាការងារឈានមុខគេនៅកម្ពុជា</p></div>
+    </a>
+    <a href="https://pelprek.com/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="w-14 h-14 shrink-0 rounded-full bg-green-500 flex items-center justify-center text-xl font-bold text-white">P</div>
+      <div><h3 class="text-white font-bold text-lg khmer-title group-hover:text-cyan-400 transition-colors">Pelprek (ពេលព្រឹក)</h3><p class="text-sm text-slate-400 khmer">ស្វែងរកការងារ និងកម្មសិក្សា</p></div>
+    </a>
+    <a href="https://bongthom.com/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="w-14 h-14 shrink-0 rounded-full bg-yellow-500 flex items-center justify-center text-xl font-bold text-black">BT</div>
+      <div><h3 class="text-white font-bold text-lg khmer-title group-hover:text-cyan-400 transition-colors">BongThom</h3><p class="text-sm text-slate-400 khmer">ការងារសម្រាប់ជនជាតិខ្មែរ និងបរទេស</p></div>
+    </a>
+    <a href="https://www.khmer24.com/en/jobs.html" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="w-14 h-14 shrink-0 rounded-full bg-red-600 flex items-center justify-center text-xl font-bold text-white">K24</div>
+      <div><h3 class="text-white font-bold text-lg khmer-title group-hover:text-cyan-400 transition-colors">Khmer24 Jobs</h3><p class="text-sm text-slate-400 khmer">ប្រភពការងារគ្រប់ប្រភេទ</p></div>
+    </a>
+    <a href="http://www.nea.gov.kh/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="w-14 h-14 shrink-0 rounded-full bg-blue-800 flex items-center justify-center text-xl font-bold text-white">NEA</div>
+      <div><h3 class="text-white font-bold text-lg khmer-title group-hover:text-cyan-400 transition-colors">ទីភ្នាក់ងារជាតិមុខរបរ</h3><p class="text-sm text-slate-400 khmer">សេវាកម្មការងាររបស់រដ្ឋាភិបាល</p></div>
+    </a>
+    <a href="https://topjobcambodia.com/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="w-14 h-14 shrink-0 rounded-full bg-slate-800 flex items-center justify-center text-xl font-bold text-white">Top</div>
+      <div><h3 class="text-white font-bold text-lg khmer-title group-hover:text-cyan-400 transition-colors">TopJob Cambodia</h3><p class="text-sm text-slate-400 khmer">ការងារកម្រិតខ្ពស់ និងអាជីព</p></div>
+    </a>
+  </div>
+</div></div>
+
+<div id="page-schools" class="page"><div class="min-h-screen pt-28 pb-20 px-4 max-w-6xl mx-auto">
+  <div class="text-center mb-10">
+    <h1 class="font-bold text-4xl grad-text khmer-title mb-4 lang-text uppercase" data-km="គ្រឹះស្ថានបណ្តុះបណ្តាលបច្ចេកទេស និងវិជ្ជាជីវៈ (TVET)" data-en="TVET INSTITUTES">គ្រឹះស្ថានបណ្តុះបណ្តាលបច្ចេកទេស និងវិជ្ជាជីវៈ (TVET)</h1>
+    <p class="text-slate-400 khmer max-w-2xl mx-auto leading-relaxed text-base md:text-lg mt-4 lang-text text-left md:text-center" data-km="ស្វែងរកវិទ្យាស្ថាន TVET របស់រដ្ឋ និងឯកជន ដើម្បីចាប់យកជំនាញជាក់លាក់ និងឱកាសការងាររហ័ស។" data-en="Find public and private TVET institutes to gain specific skills and fast career opportunities.">ស្វែងរកវិទ្យាស្ថាន TVET របស់រដ្ឋ និងឯកជន ដើម្បីចាប់យកជំនាញជាក់លាក់ និងឱកាសការងាររហ័ស។</p>
+  </div>
+  
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
+    <a href="https://www.facebook.com/tsprpi/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container">
+        <img src="https://ui-avatars.com/api/?name=TSPRPI&background=6b21a8&color=fff&font-size=0.3" alt="Logo" class="logo-img">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">វិទ្យាស្ថានពហុបច្ចេកទេសភូមិភាគតេជោសែនសៀមរាប</h3><p class="text-xs text-slate-400 khmer mt-1">ជំនាញបច្ចេកទេសប្រចាំភូមិភាគ</p></div>
+    </a>
+    <a href="https://www.facebook.com/npiacambodia/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container">
+        <img src="https://ui-avatars.com/api/?name=NPIA&background=0284c7&color=fff&font-size=0.3" alt="Logo" class="logo-img">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">វិទ្យាស្ថានជាតិពហុបច្ចេកទេសអង្គរ</h3><p class="text-xs text-slate-400 khmer mt-1">ខេត្តសៀមរាប</p></div>
+    </a>
+    <a href="https://www.facebook.com/ctsdiseamreap/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container">
+        <img src="https://ui-avatars.com/api/?name=CTSDI&background=991b1b&color=fff&font-size=0.3" alt="Logo" class="logo-img">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">វិទ្យាស្ថានអភិវឌ្ឍន៍ជំនាញកម្ពុជា-ថៃ</h3><p class="text-xs text-slate-400 khmer mt-1">ខេត្តសៀមរាប</p></div>
+    </a>
+    <a href="http://npic.edu.kh/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container">
+        <img src="https://logo.clearbit.com/npic.edu.kh" onerror="this.src='https://ui-avatars.com/api/?name=NPIC&background=1e40af&color=fff'" alt="Logo" class="logo-img">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">វិទ្យាស្ថានជាតិពហុបច្ចេកទេសកម្ពុជា</h3><p class="text-xs text-slate-400 khmer mt-1">រាជធានីភ្នំពេញ</p></div>
+    </a>
+    <a href="https://www.ntti.edu.kh/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container">
+        <img src="https://logo.clearbit.com/ntti.edu.kh" onerror="this.src='https://ui-avatars.com/api/?name=NTTI&background=155e75&color=fff'" alt="Logo" class="logo-img">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">វិទ្យាស្ថានជាតិបណ្តុះបណ្តាលបច្ចេកទេស</h3><p class="text-xs text-slate-400 khmer mt-1">រាជធានីភ្នំពេញ</p></div>
+    </a>
+    <a href="https://www.facebook.com/niei.edu.kh/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container">
+        <img src="https://ui-avatars.com/api/?name=NIEI&background=ea580c&color=fff&font-size=0.3" alt="Logo" class="logo-img">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">វិទ្យាស្ថានជាតិសហគ្រិនភាព និងនវានុវត្តន៍</h3><p class="text-xs text-slate-400 khmer mt-1">រាជធានីភ្នំពេញ</p></div>
+    </a>
+    <a href="https://nib.edu.kh/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container">
+        <img src="https://ui-avatars.com/api/?name=NIB&background=16a34a&color=fff&font-size=0.3" alt="Logo" class="logo-img">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">វិទ្យាស្ថានជាតិពាណិជ្ជសាស្ត្រ</h3><p class="text-xs text-slate-400 khmer mt-1">រាជធានីភ្នំពេញ</p></div>
+    </a>
+    <a href="http://ppi.edu.kh/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container">
+        <img src="https://logo.clearbit.com/ppi.edu.kh" onerror="this.src='https://ui-avatars.com/api/?name=PPI&background=854d0e&color=fff'" alt="Logo" class="logo-img">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">វិទ្យាស្ថានពហុបច្ចេកទេសព្រះកុសុមៈ</h3><p class="text-xs text-slate-400 khmer mt-1">រាជធានីភ្នំពេញ</p></div>
+    </a>
+    <a href="http://www.iti.edu.kh/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container">
+        <img src="https://logo.clearbit.com/iti.edu.kh" onerror="this.src='https://ui-avatars.com/api/?name=ITI&background=166534&color=fff'" alt="Logo" class="logo-img">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">វិទ្យាស្ថានបច្ចេកទេសឧស្សាហកម្ម</h3><p class="text-xs text-slate-400 khmer mt-1">រាជធានីភ្នំពេញ</p></div>
+    </a>
+    <a href="https://npic.edu.kh/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container">
+        <img src="https://ui-avatars.com/api/?name=JVC&background=1e293b&color=fff" alt="Logo" class="logo-img">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">វិទ្យាស្ថានបច្ចេកទេសជប៉ុនកម្ពុជា</h3><p class="text-xs text-slate-400 khmer mt-1">រាជធានីភ្នំពេញ</p></div>
+    </a>
+    <a href="https://www.facebook.com/ptcbat/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container">
+        <img src="https://ui-avatars.com/api/?name=PTC+B&background=115e59&color=fff&font-size=0.3" alt="Logo" class="logo-img">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">វិទ្យាស្ថានពហុបច្ចេកទេសខេត្តបាត់ដំបង</h3><p class="text-xs text-slate-400 khmer mt-1">ខេត្តបាត់ដំបង</p></div>
+    </a>
+    <a href="https://www.facebook.com/ptcbanteaymeanchey/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container">
+        <img src="https://ui-avatars.com/api/?name=PTCBM&background=831843&color=fff&font-size=0.3" alt="Logo" class="logo-img">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">វិទ្យាស្ថានពហុបច្ចេកទេសខេត្តបន្ទាយមានជ័យ</h3><p class="text-xs text-slate-400 khmer mt-1">ខេត្តបន្ទាយមានជ័យ</p></div>
+    </a>
+    <a href="https://www.facebook.com/PTCKampongCham/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container">
+        <img src="https://ui-avatars.com/api/?name=PTCKC&background=9a3412&color=fff&font-size=0.3" alt="Logo" class="logo-img">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">វិទ្យាស្ថានពហុបច្ចេកទេសខេត្តកំពង់ចាម</h3><p class="text-xs text-slate-400 khmer mt-1">ខេត្តកំពង់ចាម</p></div>
+    </a>
+    <a href="https://www.facebook.com/ptctakeo/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container">
+        <img src="https://ui-avatars.com/api/?name=PTC+T&background=9333ea&color=fff&font-size=0.3" alt="Logo" class="logo-img">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">វិទ្យាស្ថានពហុបច្ចេកទេសខេត្តតាកែវ</h3><p class="text-xs text-slate-400 khmer mt-1">ខេត្តតាកែវ</p></div>
+    </a>
+    <a href="https://www.facebook.com/Ptcshv/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container">
+        <img src="https://ui-avatars.com/api/?name=STVET&background=1e3a8a&color=fff&font-size=0.3" alt="Logo" class="logo-img">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">វិទ្យាស្ថានពហុបច្ចេកទេសខេត្តព្រះសីហនុ</h3><p class="text-xs text-slate-400 khmer mt-1">ខេត្តព្រះសីហនុ</p></div>
+    </a>
+    <a href="https://www.facebook.com/KampotPTC/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container">
+        <img src="https://ui-avatars.com/api/?name=KPTC&background=14532d&color=fff&font-size=0.3" alt="Logo" class="logo-img">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">វិទ្យាស្ថានពហុបច្ចេកទេសខេត្តកំពត</h3><p class="text-xs text-slate-400 khmer mt-1">ខេត្តកំពត</p></div>
+    </a>
+    <a href="https://www.passerellesnumeriques.org/en/our-actions/cambodia/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container">
+        <img src="https://logo.clearbit.com/passerellesnumeriques.org" onerror="this.src='https://ui-avatars.com/api/?name=PNC&background=3b82f6&color=fff'" alt="Logo" class="logo-img bg-blue-500">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">ប៉ាសឺរ៉ែល នូមេរីក កម្ពុជា (PNC)</h3><p class="text-xs text-slate-400 khmer mt-1">ព័ត៌មានវិទ្យា (NGO)</p></div>
+    </a>
+    <a href="https://donboscocambodia.org/" target="_blank" class="glass p-6 rounded-2xl border border-white/10 hover:border-cyan-400 transition-all flex items-center gap-4 group no-underline">
+      <div class="logo-container bg-yellow-400">
+        <img src="https://logo.clearbit.com/donboscocambodia.org" onerror="this.src='https://ui-avatars.com/api/?name=BOSCO&background=facc15&color=000&font-size=0.3'" alt="Logo" class="logo-img">
+      </div>
+      <div><h3 class="text-white font-bold text-base khmer-title group-hover:text-cyan-400 transition-colors">សាលាបច្ចេកទេសដុនបូស្កូ</h3><p class="text-xs text-slate-400 khmer mt-1">បច្ចេកទេសចម្រុះ (NGO)</p></div>
+    </a>
+  </div>
+</div></div>
+
+<div id="page-seminar" class="page"><div class="min-h-screen pt-28 pb-20 px-4 max-w-5xl mx-auto">
+  <div class="text-center mb-10">
+    <h1 class="font-bold text-4xl grad-text khmer-title mb-4 lang-text uppercase" data-km="សិក្ខាសាលា និងវគ្គបណ្តុះបណ្តាល" data-en="SEMINARS & TRAINING">សិក្ខាសាលា និងវគ្គបណ្តុះបណ្តាល</h1>
+    <p class="text-slate-400 khmer max-w-2xl mx-auto leading-relaxed text-base md:text-lg mt-4 lang-text text-left md:text-center" data-km="ស្វែងយល់ពីកម្មវិធីសិក្ខាសាលា និងវគ្គបណ្តុះបណ្តាលថ្មីៗរបស់យើង ដើម្បីអភិវឌ្ឍសមត្ថភាព និងត្រៀមខ្លួនសម្រាប់ទីផ្សារការងារ។" data-en="Discover our latest seminars and training programs to develop your skills and prepare for the job market.">ស្វែងយល់ពីកម្មវិធីសិក្ខាសាលា និងវគ្គបណ្តុះបណ្តាលថ្មីៗរបស់យើង ដើម្បីអភិវឌ្ឍសមត្ថភាព និងត្រៀមខ្លួនសម្រាប់ទីផ្សារការងារ។</p>
+  </div>
+  <div class="glass p-6 md:p-10 rounded-3xl border border-cyan-500/30 text-center relative overflow-hidden text-left">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 blur-3xl rounded-full pointer-events-none"></div>
+    <div class="w-full max-w-3xl mx-auto aspect-[16/9] md:aspect-[21/9] bg-black/50 rounded-2xl border border-white/10 flex items-center justify-center overflow-hidden mb-10 relative group shadow-[0_0_30px_rgba(0,240,255,0.1)]">
+       <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80" alt="Seminar Poster" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
+       <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity text-center">
+          <span class="text-white font-black text-2xl khmer-title mb-4 lang-text" data-km="បើកទទួលចុះឈ្មោះឆាប់ៗនេះ" data-en="Registration Opens Soon">បើកទទួលចុះឈ្មោះឆាប់ៗនេះ</span>
+          <a href="https://t.me/Counsellerkh_bot" target="_blank" class="bg-cyan-500 text-black font-bold px-8 py-4 rounded-xl khmer text-base hover:scale-105 transition-transform cursor-pointer no-underline lang-text" data-km="ទាក់ទងសួរព័ត៌មាន" data-en="Contact for Info">ទាក់ទងសួរព័ត៌មាន</a>
+       </div>
+    </div>
+    <h2 class="text-3xl font-bold text-white khmer-title mb-6 lang-text md:text-center" data-km="វគ្គសិក្ខាសាលាស្តីពីការប្រឹក្សាយោបល់អាជីព" data-en="Career Counseling Seminar">វគ្គសិក្ខាសាលាស្តីពីការប្រឹក្សាយោបល់អាជីព</h2>
+    <p class="text-slate-300 khmer text-base md:text-lg mb-10 max-w-3xl mx-auto leading-relaxed lang-text md:text-center" data-km="ចូលរួមជាមួយវាគ្មិនកិត្តិយស និងអ្នកជំនាញដើម្បីស្វែងយល់ពីគន្លឹះសរសេរ CV ការសម្ភាសន៍ការងារ និងការជ្រើសរើសអាជីពដែលត្រូវនឹងចំណូលចិត្ត និងសមត្ថភាពពិតប្រាកដរបស់អ្នក។" data-en="Join guest speakers and experts to learn tips on writing CVs, job interviews, and choosing a career that matches your true interests and abilities.">ចូលរួមជាមួយវាគ្មិនកិត្តិយស និងអ្នកជំនាញដើម្បីស្វែងយល់ពីគន្លឹះសរសេរ CV ការសម្ភាសន៍ការងារ និងការជ្រើសរើសអាជីពដែលត្រូវនឹងចំណូលចិត្ត និងសមត្ថភាពពិតប្រាកដរបស់អ្នក។</p>
+    <div class="flex flex-wrap justify-center md:justify-center gap-5 text-base text-slate-300 khmer font-mono mb-8">
+      <span class="bg-white/5 px-6 py-3 rounded-xl border border-white/10 flex items-center gap-3">📅 <span class="lang-text" data-km="ថ្ងៃទី ២៥ មេសា ២០២៦" data-en="April 25, 2026">ថ្ងៃទី ២៥ មេសា ២០២៦</span></span>
+      <span class="bg-white/5 px-6 py-3 rounded-xl border border-white/10 flex items-center gap-3">⏰ <span class="lang-text" data-km="ម៉ោង ៨:០០ ព្រឹក - ១១:៣០ ព្រឹក" data-en="8:00 AM - 11:30 AM">ម៉ោង ៨:០០ ព្រឹក - ១១:៣០ ព្រឹក</span></span>
+      <span class="bg-white/5 px-6 py-3 rounded-xl border border-white/10 flex items-center gap-3">📍 <span class="lang-text" data-km="តាមអនឡាញ (Online)" data-en="Online">តាមអនឡាញ (Online)</span></span>
+    </div>
+    <div class="text-center md:text-center"><button class="btn-neon px-10 py-5 rounded-2xl font-bold text-lg khmer cursor-not-allowed opacity-80 lang-text" data-km="កំពុងរៀបចំកម្មវិធី ⏳" data-en="Preparing Program ⏳">កំពុងរៀបចំកម្មវិធី ⏳</button></div>
+  </div>
+</div></div>
+
+<div id="page-dashboard" class="page"><div class="min-h-screen pt-24 pb-20 px-4 max-w-4xl mx-auto">
+  <div class="text-center mb-10">
+    <div class="mb-6"><span class="section-badge mono khmer inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-sm md:text-base text-cyan-400 lang-text" data-km="ផែនទីតម្រង់ទិស" data-en="Guidance Map">ផែនទីតម្រង់ទិស</span></div>
+    <h1 class="font-bold text-4xl grad-text khmer-title mb-4 lang-text uppercase" data-km="ផែនទីបង្ហាញផ្លូវជីវិត និងអាជីព" data-en="LIFE & CAREER ROADMAP">ផែនទីបង្ហាញផ្លូវជីវិត និងអាជីព</h1>
+    <p class="text-slate-400 khmer max-w-2xl mx-auto leading-relaxed text-base md:text-lg mt-4 lang-text text-left md:text-center" data-km="ត្រីវិស័យតម្រង់ទិសសម្រាប់រៀបចំផែនការជីវិតតាំងពីវ័យសិក្សារហូតដល់ចូលនិវត្តន៍។" data-en="A guiding compass for life planning from student years to retirement.">ត្រីវិស័យតម្រង់ទិសសម្រាប់រៀបចំផែនការជីវិតតាំងពីវ័យសិក្សារហូតដល់ចូលនិវត្តន៍។</p>
+  </div>
+  
+  <div class="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-1 before:bg-gradient-to-b before:from-cyan-500 before:via-purple-500 before:to-pink-500">
+    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+      <div class="flex items-center justify-center w-14 h-14 rounded-full border-4 border-slate-900 bg-green-400 text-slate-900 font-bold shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-[0_0_15px_rgba(74,222,128,0.5)] relative z-10 text-2xl">🏃</div>
+      <div class="w-[calc(100%-4.5rem)] md:w-[calc(50%-3.5rem)] glass p-6 rounded-3xl border border-green-500/30 hover:-translate-y-2 transition-transform text-left">
+        <div class="flex items-center justify-between mb-3"><h3 class="font-bold text-white khmer-title text-xl md:text-2xl lang-text" data-km="ការរក្សាសុខភាព" data-en="Maintaining Health">ការរក្សាសុខភាព</h3><span class="text-xs bg-green-500/20 text-green-400 px-3 py-1 rounded-full khmer lang-text" data-km="មូលដ្ឋានគ្រឹះ" data-en="Foundation">មូលដ្ឋានគ្រឹះ</span></div>
+        <p class="text-base text-slate-300 khmer leading-relaxed lang-text" data-km="សុខភាពជារឿងសំខាន់បំផុត។ ត្រូវហាត់ប្រាណ ញ៉ាំអាហារល្អៗ និងរក្សាសុខភាពផ្លូវចិត្ត ដើម្បីមានកម្លាំងរៀនសូត្រ និងធ្វើការ។" data-en="Health is crucial. Exercise, eat well, and maintain mental health to have energy for study and work.">សុខភាពជារឿងសំខាន់បំផុត។ ត្រូវហាត់ប្រាណ ញ៉ាំអាហារល្អៗ និងរក្សាសុខភាពផ្លូវចិត្ត ដើម្បីមានកម្លាំងរៀនសូត្រ និងធ្វើការ។</p>
+      </div>
+    </div>
+    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+      <div class="flex items-center justify-center w-14 h-14 rounded-full border-4 border-slate-900 bg-cyan-400 text-slate-900 font-bold shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-[0_0_15px_rgba(34,211,238,0.5)] relative z-10 text-2xl">📚</div>
+      <div class="w-[calc(100%-4.5rem)] md:w-[calc(50%-3.5rem)] glass p-6 rounded-3xl border border-cyan-500/30 hover:-translate-y-2 transition-transform text-left">
+        <div class="flex items-center justify-between mb-3"><h3 class="font-bold text-white khmer-title text-xl md:text-2xl lang-text" data-km="ការសិក្សាចំណេះទូទៅ" data-en="General Education">ការសិក្សាចំណេះទូទៅ</h3><span class="text-xs bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded-full khmer lang-text" data-km="ចំណេះដឹងទូទៅ" data-en="General Knowledge">ចំណេះដឹងទូទៅ</span></div>
+        <p class="text-base text-slate-300 khmer leading-relaxed lang-text" data-km="ចាប់ផ្តើមតាំងពីបឋមរហូតដល់វិទ្យាល័យ។ ផ្តោតលើការយល់ដឹងទូលំទូលាយ ទាំងវិទ្យាសាស្ត្រ សង្គម និងភាសា។" data-en="From primary to high school. Focus on broad understanding in science, social studies, and languages.">ចាប់ផ្តើមតាំងពីបឋមរហូតដល់វិទ្យាល័យ។ ផ្តោតលើការយល់ដឹងទូលំទូលាយ ទាំងវិទ្យាសាស្ត្រ សង្គម និងភាសា។</p>
+      </div>
+    </div>
+    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+      <div class="flex items-center justify-center w-14 h-14 rounded-full border-4 border-slate-900 bg-purple-400 text-slate-900 font-bold shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-[0_0_15px_rgba(192,132,252,0.5)] relative z-10 text-2xl">🎯</div>
+      <div class="w-[calc(100%-4.5rem)] md:w-[calc(50%-3.5rem)] glass p-6 rounded-3xl border border-purple-500/30 hover:-translate-y-2 transition-transform text-left">
+        <div class="flex items-center justify-between mb-3"><h3 class="font-bold text-white khmer-title text-xl md:text-2xl lang-text" data-km="ការជ្រើសរើសជំនាញសិក្សា" data-en="Choosing a Major">ការជ្រើសរើសជំនាញសិក្សា</h3><span class="text-xs bg-purple-500/20 text-purple-400 px-3 py-1 rounded-full khmer lang-text" data-km="ឯកទេស" data-en="Specialization">ឯកទេស</span></div>
+        <p class="text-base text-slate-300 khmer leading-relaxed lang-text" data-km="ស្វែងយល់ពីចំណូលចិត្ត និងទេពកោសល្យ ដើម្បីជ្រើសរើសជំនាញនៅសាកលវិទ្យាល័យ ឬ TVET ដែលស័ក្តិសមបំផុត។" data-en="Understand your interests and talents to choose the best-fitting major at university or TVET.">ស្វែងយល់ពីចំណូលចិត្ត និងទេពកោសល្យ ដើម្បីជ្រើសរើសជំនាញនៅសាកលវិទ្យាល័យ ឬ TVET ដែលស័ក្តិសមបំផុត។</p>
+      </div>
+    </div>
+    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+      <div class="flex items-center justify-center w-14 h-14 rounded-full border-4 border-slate-900 bg-blue-400 text-slate-900 font-bold shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-[0_0_15px_rgba(96,165,250,0.5)] relative z-10 text-2xl">💼</div>
+      <div class="w-[calc(100%-4.5rem)] md:w-[calc(50%-3.5rem)] glass p-6 rounded-3xl border border-blue-500/30 hover:-translate-y-2 transition-transform text-left">
+        <div class="flex items-center justify-between mb-3"><h3 class="font-bold text-white khmer-title text-xl md:text-2xl lang-text" data-km="ប្រាក់ចំណូល និងអាជីព" data-en="Income & Career">ប្រាក់ចំណូល និងអាជីព</h3><span class="text-xs bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full khmer lang-text" data-km="ការងារ" data-en="Work">ការងារ</span></div>
+        <p class="text-base text-slate-300 khmer leading-relaxed lang-text" data-km="ប្រើប្រាស់ជំនាញដើម្បីចាប់ផ្តើមអាជីព បង្កើតប្រាក់ចំណូល និងកសាងបទពិសោធន៍ដើម្បីអភិវឌ្ឍខ្លួនជាបន្តបន្ទាប់។" data-en="Use your skills to start a career, generate income, and build experience for continuous self-development.">ប្រើប្រាស់ជំនាញដើម្បីចាប់ផ្តើមអាជីព បង្កើតប្រាក់ចំណូល និងកសាងបទពិសោធន៍ដើម្បីអភិវឌ្ឍខ្លួនជាបន្តបន្ទាប់។</p>
+      </div>
+    </div>
+    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+      <div class="flex items-center justify-center w-14 h-14 rounded-full border-4 border-slate-900 bg-yellow-400 text-slate-900 font-bold shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-[0_0_15px_rgba(250,204,21,0.5)] relative z-10 text-2xl">💰</div>
+      <div class="w-[calc(100%-4.5rem)] md:w-[calc(50%-3.5rem)] glass p-6 rounded-3xl border border-yellow-500/30 hover:-translate-y-2 transition-transform text-left">
+        <div class="flex items-center justify-between mb-3"><h3 class="font-bold text-white khmer-title text-xl md:text-2xl lang-text" data-km="ការគ្រប់គ្រងហិរញ្ញវត្ថុ" data-en="Financial Management">ការគ្រប់គ្រងហិរញ្ញវត្ថុ</h3><span class="text-xs bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full khmer lang-text" data-km="សន្សំ & វិនិយោគ" data-en="Save & Invest">សន្សំ & វិនិយោគ</span></div>
+        <p class="text-base text-slate-300 khmer leading-relaxed lang-text" data-km="ចេះបែងចែកប្រាក់ចំណូល សន្សំ និងវិនិយោគឱ្យបានត្រឹមត្រូវ ដើម្បីត្រៀមខ្លួនសម្រាប់អនាគត និងភាពអាសន្ន។" data-en="Learn to allocate income, save, and invest properly to prepare for the future and emergencies.">ចេះបែងចែកប្រាក់ចំណូល សន្សំ និងវិនិយោគឱ្យបានត្រឹមត្រូវ ដើម្បីត្រៀមខ្លួនសម្រាប់អនាគត និងភាពអាសន្ន។</p>
+      </div>
+    </div>
+    <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+      <div class="flex items-center justify-center w-14 h-14 rounded-full border-4 border-slate-900 bg-pink-400 text-slate-900 font-bold shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-[0_0_15px_rgba(244,114,182,0.5)] relative z-10 text-2xl">🌴</div>
+      <div class="w-[calc(100%-4.5rem)] md:w-[calc(50%-3.5rem)] glass p-6 rounded-3xl border border-pink-500/30 hover:-translate-y-2 transition-transform text-left">
+        <div class="flex items-center justify-between mb-3"><h3 class="font-bold text-white khmer-title text-xl md:text-2xl lang-text" data-km="ការចូលនិវត្តន៍ចុងក្រោយ" data-en="Retirement">ការចូលនិវត្តន៍ចុងក្រោយ</h3><span class="text-xs bg-pink-500/20 text-pink-400 px-3 py-1 rounded-full khmer lang-text" data-km="សេរីភាពហិរញ្ញវត្ថុ" data-en="Financial Freedom">សេរីភាពហិរញ្ញវត្ថុ</span></div>
+        <p class="text-base text-slate-300 khmer leading-relaxed lang-text" data-km="សម្រាកពីការងារជាប្រចាំ រស់នៅដោយមានសេរីភាពហិរញ្ញវត្ថុពីការសន្សំ និងចែករំលែកបទពិសោធន៍ដល់យុវជនជំនាន់ក្រោយ។" data-en="Take a break from regular work, live with financial freedom from savings, and share experiences with the next generation.">សម្រាកពីការងារជាប្រចាំ រស់នៅដោយមានសេរីភាពហិរញ្ញវត្ថុពីការសន្សំ និងចែករំលែកបទពិសោធន៍ដល់យុវជនជំនាន់ក្រោយ។</p>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<div id="page-resources" class="page"><div class="min-h-screen pt-24 pb-20 px-4 max-w-5xl mx-auto"><div class="text-center mb-10"><h1 class="font-bold text-4xl grad-text khmer-title mb-4 lang-text uppercase" data-km="ធនធាន និងព័ត៌មានបន្ថែម" data-en="RESOURCES & NEWS">ធនធាន និងព័ត៌មានបន្ថែម</h1></div><div class="grid md:grid-cols-2 gap-8"><div class="glass p-8 rounded-3xl border border-white/10 relative overflow-hidden text-left"><div class="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 blur-3xl rounded-full"></div><h2 class="text-2xl font-bold text-white khmer-title mb-6 flex items-center gap-3 lang-text" data-km="📰 ព័ត៌មានសេដ្ឋកិច្ច (ក្នុង/ក្រៅស្រុក)" data-en="📰 Economy News (Local/Global)">📰 ព័ត៌មានសេដ្ឋកិច្ច (ក្នុង/ក្រៅស្រុក)</h2>
+      
+      <div class="space-y-4">
+        <a href="https://www.worldbank.org/en/country/cambodia/publication/economic-update" target="_blank" class="block glass p-5 rounded-2xl border border-white/5 hover:border-cyan-500/30 transition-colors no-underline">
+          <h3 class="text-base font-bold text-slate-200 khmer-title mb-2 lang-text" data-km="ធនាគារពិភពលោក៖ របាយការណ៍សេដ្ឋកិច្ចកម្ពុជា" data-en="World Bank: Cambodia Economic Update">ធនាគារពិភពលោក៖ របាយការណ៍សេដ្ឋកិច្ចកម្ពុជា</h3>
+          <p class="text-sm text-slate-400 khmer lang-text" data-km="ការព្យាករកំណើនសេដ្ឋកិច្ច និងឱកាសការងារថ្មីៗ..." data-en="Economic growth forecast and new job opportunities...">ការព្យាករកំណើនសេដ្ឋកិច្ច និងឱកាសការងារថ្មីៗ...</p>
+        </a>
+        <a href="https://www.adb.org/countries/cambodia/economy" target="_blank" class="block glass p-5 rounded-2xl border border-white/5 hover:border-cyan-500/30 transition-colors no-underline">
+          <h3 class="text-base font-bold text-slate-200 khmer-title mb-2 lang-text" data-km="របាយការណ៍ ADB៖ សេដ្ឋកិច្ចឌីជីថលនៅកម្ពុជា" data-en="ADB Report: Digital Economy in Cambodia">របាយការណ៍ ADB៖ សេដ្ឋកិច្ចឌីជីថលនៅកម្ពុជា</h3>
+          <p class="text-sm text-slate-400 khmer lang-text" data-km="ការវិវឌ្ឍនៃបច្ចេកវិទ្យា និងតម្រូវការជំនាញ IT..." data-en="Technology evolution and the demand for IT skills...">ការវិវឌ្ឍនៃបច្ចេកវិទ្យា និងតម្រូវការជំនាញ IT...</p>
+        </a>
+        <a href="https://www.mef.gov.kh/" target="_blank" class="block glass p-5 rounded-2xl border border-white/5 hover:border-cyan-500/30 transition-colors no-underline">
+          <h3 class="text-base font-bold text-slate-200 khmer-title mb-2 lang-text" data-km="ក្រសួងសេដ្ឋកិច្ច និងហិរញ្ញវត្ថុ" data-en="Ministry of Economy and Finance">ក្រសួងសេដ្ឋកិច្ច និងហិរញ្ញវត្ថុ</h3>
+          <p class="text-sm text-slate-400 khmer lang-text" data-km="ព័ត៌មានផ្លូវការស្តីពីម៉ាក្រូសេដ្ឋកិច្ច និងថវិកាជាតិ..." data-en="Official news on macroeconomic and national budget...">ព័ត៌មានផ្លូវការស្តីពីម៉ាក្រូសេដ្ឋកិច្ច និងថវិកាជាតិ...</p>
+        </a>
+        <a href="https://asia.nikkei.com/Economy" target="_blank" class="block glass p-5 rounded-2xl border border-white/5 hover:border-cyan-500/30 transition-colors no-underline">
+          <h3 class="text-base font-bold text-slate-200 khmer-title mb-2 lang-text" data-km="Nikkei Asia: សេដ្ឋកិច្ចតំបន់អាស៊ី" data-en="Nikkei Asia: Asian Economy">Nikkei Asia: សេដ្ឋកិច្ចតំបន់អាស៊ី</h3>
+          <p class="text-sm text-slate-400 khmer lang-text" data-km="ព័ត៌មានសេដ្ឋកិច្ច និងពាណិជ្ជកម្មប្រចាំតំបន់អាស៊ី..." data-en="Regional economic and business news in Asia...">ព័ត៌មានសេដ្ឋកិច្ច និងពាណិជ្ជកម្មប្រចាំតំបន់អាស៊ី...</p>
+        </a>
+      </div>
+
+</div><div class="glass p-8 rounded-3xl border border-white/10 relative overflow-hidden text-left"><div class="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-3xl rounded-full"></div><h2 class="text-xl font-bold text-white khmer-title mb-6 flex items-center gap-3 lang-text" data-km="🔗 តំណភ្ជាប់សំខាន់ៗ" data-en="🔗 Important Links">🔗 តំណភ្ជាប់សំខាន់ៗ</h2><div class="space-y-4"><a href="https://www.canva.com/resumes/templates/" target="_blank" class="flex items-center justify-between glass p-5 rounded-2xl border border-white/5 hover:border-purple-500/30 transition-colors no-underline group"><div class="flex items-center gap-4"><span class="text-3xl">📝</span><div class="text-left"><h3 class="text-base font-bold text-slate-200 khmer-title lang-text" data-km="គំរូសរសេរ CV ដោយឥតគិតថ្លៃ" data-en="Free Resume Templates">គំរូសរសេរ CV ដោយឥតគិតថ្លៃ</h3><p class="text-sm text-slate-400 khmer mt-1 lang-text" data-km="ទាញយកទម្រង់ CV ស្អាតៗពី Canva" data-en="Download beautiful resume templates from Canva">ទាញយកទម្រង់ CV ស្អាតៗពី Canva</p></div></div><span class="text-slate-500 text-xl group-hover:text-white transition-colors">↗</span></a></div></div></div></div></div>
+</main>
+
+<footer class="mt-auto py-3 border-t border-cyan-500/30 bg-[#020205]/80 backdrop-blur-lg transition-colors duration-300">
+  <div class="max-w-[1400px] mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-3">
+    <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 text-[14px] md:text-[16px] text-slate-300 khmer">
+      <div class="flex items-center gap-2 cursor-pointer" onclick="showPage('home')">
+        <img src="https://ui-avatars.com/api/?name=CP&background=00f0ff&color=000&rounded=true&bold=true" alt="Logo" class="w-8 h-8 rounded-full border border-cyan-500/50 hover:scale-105 transition-transform">
+        <strong class="text-white lang-text khmer-title" data-km="វិថីឆ្ពោះទៅកាន់អាជីពខ្ញុំ" data-en="MY CAREER PATH">វិថីឆ្ពោះទៅកាន់អាជីពខ្ញុំ</strong>
+      </div>
+      <span class="hidden md:inline text-slate-600">|</span>
+      <span class="lang-text" data-km="📍 សៀមរាប" data-en="📍 Siem Reap">📍 សៀមរាប</span>
+      <span class="hidden md:inline text-slate-600">|</span>
+      <span>📞 099 825 525</span>
+    </div>
+    
+    <div class="flex items-center justify-center gap-4 sm:gap-5 w-full md:w-auto my-1 md:my-0">
+      <a href="https://web.facebook.com/profile.php?id=100066565183974" target="_blank" class="w-10 h-10 glass rounded-full flex items-center justify-center hover:bg-[#1877F2] hover:text-white transition-colors text-[#1877F2] bg-[#1877F2]/10 border-[#1877F2]/30 hover:scale-110 no-underline text-[12px] font-bold">FB</a>
+      <a href="https://t.me/+deP0McJw9gMwODQ1" target="_blank" class="w-10 h-10 glass rounded-full flex items-center justify-center hover:bg-[#2AABEE] hover:text-white transition-colors text-[#2AABEE] bg-[#2AABEE]/10 border-[#2AABEE]/30 hover:scale-110 no-underline text-[12px] font-bold">TG</a>
+      <a href="https://www.instagram.com/mycareerpathkh?igsh=NGlsczgwNTkwdHBz" target="_blank" class="w-10 h-10 glass rounded-full flex items-center justify-center hover:bg-gradient-to-tr hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] hover:text-white transition-all text-[#dc2743] bg-[#dc2743]/10 border-[#dc2743]/30 hover:scale-110 no-underline text-[12px] font-bold">IN</a>
+      <a href="https://www.tiktok.com/@ccsonline?is_from_webapp=1&sender_device=pc" target="_blank" class="w-10 h-10 glass rounded-full flex items-center justify-center hover:bg-black hover:text-white hover:shadow-[0_0_10px_#00f2fe,-0_0_10px_#fe0979] transition-all text-slate-300 border-slate-500/50 hover:border-black hover:scale-110 no-underline text-[12px] font-bold">TT</a>
+      <a href="https://www.youtube.com/@CCSOnline-SR" target="_blank" class="w-10 h-10 glass rounded-full flex items-center justify-center hover:bg-[#FF0000] hover:text-white transition-colors text-[#FF0000] bg-[#FF0000]/10 border-[#FF0000]/30 hover:scale-110 no-underline text-[12px] font-bold">YT</a>
+    </div>
+
+    <div class="text-[13px] md:text-[15px] text-slate-400 khmer text-center lang-text" data-km="© 2026 រក្សាសិទ្ធិ" data-en="© 2026 All Rights Reserved by MY CAREER PATH ">© ២០២៦ រក្សាសិទ្ធិគ្រប់យ៉ាងដោយៈ វិថីឆ្ពោះទៅកាន់អាជីពខ្ញុំ</div>
+  </div>
+</footer>
+
+<script>
+// 1. Language Toggle System
+let currentLang = 'km';
+function toggleLang() {
+    currentLang = currentLang === 'km' ? 'en' : 'km';
+    const langBtn = document.getElementById('langBtn');
+    if(langBtn) langBtn.textContent = currentLang === 'km' ? 'EN' : 'ខ្មែរ';
+    
+    const mobileLangBtn = document.getElementById('mobileLangBtn');
+    if(mobileLangBtn) mobileLangBtn.innerHTML = currentLang === 'km' ? '🇬🇧 English' : '🇰🇭 ខ្មែរ';
+    
+    document.querySelectorAll('.lang-text').forEach(el => {
+        const text = el.getAttribute('data-' + currentLang);
+        if(text) el.innerHTML = text;
+    });
+    
+    document.querySelectorAll('.lang-placeholder').forEach(el => {
+        const text = el.getAttribute('data-' + currentLang);
+        if(text) el.placeholder = text;
+    });
+    
+    if(state.currentPage === 'quiz') renderQuestion();
+    if(state.currentPage === 'report') generateFinalReport();
+    if(state.currentPage === 'careers') renderCareers();
+
+    showToast(currentLang === 'km' ? 'ប្តូរទៅភាសាខ្មែរ' : 'Switched to English');
+}
+
+// 2. Global Search System
+function handleGlobalSearchEnter(query) {
+    query = query.toLowerCase().trim();
+    if(!query) {
+        if(state.currentPage === 'careers' || state.currentPage === 'schools') handleGlobalSearch('');
+        return;
+    }
+
+    let foundSchool = false;
+    document.querySelectorAll('#page-schools .grid a').forEach(card => {
+        if(card.textContent.toLowerCase().includes(query)) foundSchool = true;
+    });
+    if(foundSchool) { showPage('schools'); handleGlobalSearch(query); return; }
+
+    let foundCareer = false;
+    document.querySelectorAll('#careerGrid .job-card, #page-careers .grid a').forEach(card => {
+        if(card.textContent.toLowerCase().includes(query)) foundCareer = true;
+    });
+    if(foundCareer) { showPage('careers'); handleGlobalSearch(query); return; }
+
+    if(/(តេស្ត|សំណួរ|test|quiz|assessment)/i.test(query)) { showPage('tests'); return; }
+    if(/(ai|ជជែក|ប្រឹក្សា|chat|bot|counsel)/i.test(query)) { showPage('chat'); return; }
+    if(/(ការងារ|អាជីព|វិស័យ|job|career|work)/i.test(query)) { showPage('careers'); return; }
+    if(/(សាលា|tvet|រៀន|គ្រឹះស្ថាន|school|university|college|study)/i.test(query)) { showPage('schools'); return; }
+    if(/(ផែនទី|អនាគត|roadmap|future|life)/i.test(query)) { showPage('dashboard'); return; }
+    if(/(សិក្ខាសាលា|វគ្គ|seminar|training|event)/i.test(query)) { showPage('seminar'); return; }
+    if(/(អំពី|about|us|vision|mission)/i.test(query)) { showPage('about'); return; }
+    if(/(ព័ត៌មាន|សេដ្ឋកិច្ច|cv|news|resource)/i.test(query)) { showPage('resources'); return; }
+
+    showToast(currentLang==='km'? '🔍 រកមិនឃើញទិន្នន័យសម្រាប់: ' + query : '🔍 No results for: ' + query);
+}
+
+function handleGlobalSearch(query) {
+    query = query.toLowerCase().trim();
+    const desktopInput = document.getElementById('desktopSearchInput');
+    const mobileInput = document.getElementById('mobileSearchInput');
+    if(desktopInput && desktopInput.value !== query && desktopInput !== document.activeElement) desktopInput.value = query;
+    if(mobileInput && mobileInput.value !== query && mobileInput !== document.activeElement) mobileInput.value = query;
+
+    if(state.currentPage === 'careers') {
+        const cards = document.querySelectorAll('#careerGrid .job-card, #page-careers .grid a');
+        cards.forEach(card => { card.style.display = card.textContent.toLowerCase().includes(query) ? 'flex' : 'none'; });
+    }
+    if(state.currentPage === 'schools') {
+        const schoolCards = document.querySelectorAll('#page-schools .grid a');
+        schoolCards.forEach(card => { card.style.display = card.textContent.toLowerCase().includes(query) ? 'flex' : 'none'; });
+    }
+}
+
+// 3. Database (ទិន្នន័យដើម១០០% រក្សាទុកដដែល)
+const CLUSTER_NAMES_KM = ["កសិកម្ម និងធនធានធម្មជាតិ", "ស្ថាបត្យកម្ម និងសំណង់", "សិល្បៈ និងសារគមនាគមន៍", "ពាណិជ្ជកម្ម និងរដ្ឋបាល", "អប់រំ និងបណ្តុះបណ្តាល", "ហិរញ្ញវត្ថុ និងគណនេយ្យ", "រដ្ឋាភិបាល និងរដ្ឋបាលសាធារណៈ", "វិទ្យាសាស្ត្រសុខាភិបាល", "បដិសណ្ឋារកិច្ច និងទេសចរណ៍", "សេវាកម្មមនុស្សធម៌", "បច្ចេកវិទ្យាព័ត៌មាន (IT)", "ច្បាប់ និងសុវត្ថិភាពសាធារណៈ", "ផលិតកម្ម និងកម្មន្តសាល", "ទីផ្សារ និងការលក់", "វិទ្យាសាស្ត្រ និងវិស្វកម្ម (STEM)", "ដឹកជញ្ជូន និងភស្តុភារ"];
+const CLUSTER_NAMES_EN = ["Agriculture & Natural Resources", "Architecture & Construction", "Arts & Communication", "Business & Administration", "Education & Training", "Finance & Accounting", "Government & Public Administration", "Health Science", "Hospitality & Tourism", "Human Services", "Information Technology (IT)", "Law & Public Safety", "Manufacturing", "Marketing & Sales", "Science, Technology, Engineering & Math (STEM)", "Transportation & Logistics"];
+
+const CLUSTER_JOBS_KM = ["វិស្វករកសិកម្ម, ពេទ្យសត្វ, អ្នកវិទ្យាសាស្ត្រផ្នែកម្ហូបអាហារ, ជំនាញក្សេត្រសាស្ត្រ, អ្នកអភិរក្សបរិស្ថាន", "ស្ថាបត្យករ, វិស្វករសំណង់ស៊ីវិល, អ្នកគូរប្លង់ខាងក្នុង, វិស្វករអគ្គិសនី, អ្នកគ្រប់គ្រងការដ្ឋានសំណង់", "អ្នករចនាក្រាហ្វិក, អ្នកសារព័ត៌មាន, អ្នកផលិតភាពយន្ត, អ្នកនិពន្ធ, អ្នកថតរូបអាជីព", "អ្នកគ្រប់គ្រងធនធានមនុស្ស, គណនេយ្យករ, ជំនួយការរដ្ឋបាល, អ្នកគ្រប់គ្រងអាជីវកម្ម, លេខាធិការ", "គ្រូបង្រៀន, នាយកសាលា, អ្នកប្រឹក្សាយោបល់, សាស្ត្រាចារ្យ, អ្នកអភិវឌ្ឍន៍កម្មវិធីសិក្សា", "អ្នកវិភាគហិរញ្ញវត្ថុ, មន្ត្រីឥណទាន, សវនករ, អ្នកប្រឹក្សាផ្នែកហិរញ្ញវត្ថុ, អ្នកវិនិយោគ", "អ្នកការទូត, មន្ត្រីរាជការ, អ្នកតាក់តែងច្បាប់, អ្នកវិភាគគោលនយោបាយ, មន្ត្រីរដ្ឋបាលសាធារណៈ", "វេជ្ជបណ្ឌិត, គិលានុបដ្ឋាយិកា, ឱសថការី, ទន្តពេទ្យ, អ្នកបច្ចេកទេសមន្ទីរពិសោធន៍", "អ្នកគ្រប់គ្រងសណ្ឋាគារ, មគ្គុទេសក៍ទេសចរណ៍, ចុងភៅ, អ្នករៀបចំព្រឹត្តិការណ៍, បុគ្គលិកបម្រើសេវាកម្មហោះហើរ", "អ្នកសង្គមកិច្ច, អ្នកចិត្តវិទ្យា, អ្នកផ្តល់ប្រឹក្សា, មន្ត្រីអភិវឌ្ឍន៍សហគមន៍, អ្នកថែទាំកុមារ", "អ្នកសរសេរកូដ (Developer), អ្នកវិភាគប្រព័ន្ធ, អ្នកជំនាញសន្តិសុខសាយប័រ, អ្នកគ្រប់គ្រងទិន្នន័យ, អ្នករចនាគេហទំព័រ", "មេធាវី, ចៅក្រម, មន្ត្រីប៉ូលីស, អ្នកស៊ើបអង្កេត, មន្ត្រីពន្លត់អគ្គិភ័យ", "វិស្វកររោងចក្រ, អ្នកត្រួតពិនិត្យគុណភាព, អ្នកបច្ចេកទេស, ប្រធានផ្នែកផលិតកម្ម, អ្នករចនាផលិតផល", "ប្រធានទីផ្សារ, ភ្នាក់ងារលក់អចលនទ្រព្យ, អ្នករៀបចំព្រឹត្តិការណ៍, អ្នកឯកទេសទីផ្សារឌីជីថល, អ្នកតំណាងផ្នែកលក់", "អ្នកវិទ្យាសាស្ត្រ, វិស្វករមេកានិក, អ្នកស្រាវជ្រាវជីវសាស្ត្រ, អ្នកគីមីវិទ្យា, វិស្វករបរិស្ថាន", "អ្នកគ្រប់គ្រងភស្តុភារ (Logistics), អ្នកបើកបរយន្តហោះ, ប្រធានឃ្លាំង, មន្ត្រីគយនិងរដ្ឋាករ, អ្នកគ្រប់គ្រងខ្សែច្រវាក់ផ្គត់ផ្គង់"];
+const CLUSTER_JOBS_EN = ["Agricultural Engineer, Veterinarian, Food Scientist, Agronomy Specialist, Environmental Conservationist", "Architect, Civil Engineer, Interior Designer, Electrical Engineer, Construction Manager", "Graphic Designer, Journalist, Filmmaker, Writer, Professional Photographer", "HR Manager, Accountant, Administrative Assistant, Business Manager, Secretary", "Teacher, Principal, Counselor, Professor, Curriculum Developer", "Financial Analyst, Loan Officer, Auditor, Financial Advisor, Investor", "Diplomat, Civil Servant, Legislator, Policy Analyst, Public Administrator", "Doctor, Nurse, Pharmacist, Dentist, Lab Technician", "Hotel Manager, Tour Guide, Chef, Event Planner, Flight Attendant", "Social Worker, Psychologist, Counselor, Community Development Officer, Childcare Worker", "Software Developer, Systems Analyst, Cybersecurity Expert, Database Administrator, Web Designer", "Lawyer, Judge, Police Officer, Investigator, Firefighter", "Factory Engineer, Quality Controller, Technician, Production Manager, Product Designer", "Marketing Manager, Real Estate Agent, Event Planner, Digital Marketer, Sales Representative", "Scientist, Mechanical Engineer, Biological Researcher, Chemist, Environmental Engineer", "Logistics Manager, Pilot, Warehouse Manager, Customs Officer, Supply Chain Manager"];
+
+const VAL_LABELS_KM = ["សិល្បៈ និងការច្នៃប្រឌិត", "តក្កវិជ្ជា និងលេខនពន្ធ", "សង្គម និងការទំនាក់ទំនង", "គ្រប់គ្រង និងសម្រេចចិត្ត", "រូបវ័ន្ត និងការអនុវត្តជាក់ស្តែង", "វិទ្យាសាស្ត្រ និងបច្ចេកទេស"];
+const VAL_LABELS_EN = ["Arts & Creativity", "Logic & Arithmetic", "Social & Communication", "Management & Decision Making", "Physical & Practical", "Science & Technical"];
+
+const PERS_LABELS_KM = ["ប្រាកដនិយម (Realistic)", "ពូកែអង្កេត (Investigative)", "សិល្បៈនិយម (Artistic)", "ប្រាស្រ័យទាក់ទង (Social)", "ត្រិះរិះពិចារណា (Enterprising)", "រក្សាសណ្តាប់ធ្នាប់ (Conventional)"];
+const PERS_LABELS_EN = ["Realistic", "Investigative", "Artistic", "Social", "Enterprising", "Conventional"];
+
+const CAREER_CLUSTERS = [
+  { color:'#00ffa3', icon:'🌾',
+    desc:'វាយតម្លៃ និងអភិវឌ្ឍធនធានធម្មជាតិ ដំណាំ និងបរិស្ថាន',
+    desc_en:'Evaluate and develop natural resources, crops, and the environment' },
+  { color:'#00f0ff', icon:'🏗️',
+    desc:'រចនា សាងសង់ និងថែទាំរចនាសម្ព័ន្ធ អគារ និងហេដ្ឋារចនាសម្ព័ន្ធ',
+    desc_en:'Design, construct, and maintain structures, buildings, and infrastructure' },
+  { color:'#ff2d9b', icon:'🎨',
+    desc:'បង្កើត ទំនាក់ទំនង និងចែករំលែកគំនិតតាមរយៈសិល្បៈ និងប្រព័ន្ធផ្សព្វផ្សាយ',
+    desc_en:'Create, communicate, and share ideas through arts and media' },
+  { color:'#b44fff', icon:'💼',
+    desc:'គ្រប់គ្រងប្រតិបត្តិការអាជីវកម្ម ធនធានមនុស្ស និងរដ្ឋបាល',
+    desc_en:'Manage business operations, human resources, and administration' },
+  { color:'#ffd700', icon:'📚',
+    desc:'បណ្ដុះបណ្ដាល ណែនាំ និងអភិវឌ្ឍសមត្ថភាពមនុស្ស',
+    desc_en:'Train, guide, and develop human capabilities and knowledge' },
+  { color:'#00ffa3', icon:'💰',
+    desc:'គ្រប់គ្រងហិរញ្ញវត្ថុ វិនិយោគ ធានារ៉ាប់រង និងគណនេយ្យ',
+    desc_en:'Manage finance, investment, insurance, and accounting' },
+  { color:'#00f0ff', icon:'🏛️',
+    desc:'បំរើរដ្ឋ គ្រប់គ្រងសាធារណៈ និងការពារផលប្រយោជន៍ប្រជាជន',
+    desc_en:'Serve the state, manage public affairs, and protect citizens\' interests' },
+  { color:'#ff2d9b', icon:'⚕️',
+    desc:'ថែទាំ ព្យាបាល និងបង្ការជំងឺ ដើម្បីសុខភាពល្អ',
+    desc_en:'Care, treat, and prevent illness to promote good health' },
+  { color:'#b44fff', icon:'🏨',
+    desc:'ផ្ដល់សេវាកម្មទេសចរណ៍ បដិសណ្ឋារកិច្ច និងការកំសាន្ត',
+    desc_en:'Provide tourism, hospitality, and entertainment services' },
+  { color:'#ffd700', icon:'🤝',
+    desc:'ជួយ គាំទ្រ និងអភិវឌ្ឍសហគមន៍ និងជីវភាពមនុស្ស',
+    desc_en:'Help, support, and develop communities and human livelihoods' },
+  { color:'#00ffa3', icon:'💻',
+    desc:'អភិវឌ្ឍ គ្រប់គ្រង និងធានាសុវត្ថិភាពប្រព័ន្ធបច្ចេកវិទ្យាព័ត៌មាន',
+    desc_en:'Develop, manage, and secure information technology systems' },
+  { color:'#00f0ff', icon:'⚖️',
+    desc:'ការពារច្បាប់ សន្តិសុខ និងយុត្តិធម៌ក្នុងសង្គម',
+    desc_en:'Uphold law, security, and justice in society' },
+  { color:'#ff2d9b', icon:'🏭',
+    desc:'ផលិត ដំឡើង និងត្រួតពិនិត្យគុណភាពទំនិញ',
+    desc_en:'Produce, assemble, and control the quality of goods' },
+  { color:'#b44fff', icon:'📈',
+    desc:'ផ្សព្វផ្សាយ លក់ និងបង្កើតតម្លៃផលិតផល',
+    desc_en:'Promote, sell, and create value for products and services' },
+  { color:'#ffd700', icon:'🔬',
+    desc:'ស្រាវជ្រាវ វិភាគ និងច្នៃប្រឌិតដំណោះស្រាយដោយវិទ្យាសាស្ត្រ',
+    desc_en:'Research, analyze, and innovate scientific solutions' },
+  { color:'#00ffa3', icon:'✈️',
+    desc:'គ្រប់គ្រង ដឹកជញ្ជូន និងចែកចាយទំនិញ មនុស្ស',
+    desc_en:'Manage, transport, and distribute goods and people efficiently' }
+];
+const INTEREST_KM = ["ការដាំដុះ និងថែទាំរុក្ខជាតិ,ការគ្រប់គ្រង និងថែរក្សាធនធានធម្មជាតិ,ការថែទាំសត្វមានជំងឺ,ការធ្វើការនៅក្នុងកសិដ្ឋានឬចំការដំណាំ,ការសិក្សាពីសមាសធាតុផ្សំដី,ការធ្វើពិសោធន៍អំពីដំណាំ ឬរុក្ខជាតិ", "ការផ្គុំ ឬដំឡើងសម្ភារផ្សេងៗអំពីឈើ,ការបញ្ជារគ្រឿងចក្រឬឧបករណ៍ធុនធ្ងន់,ការធ្វើការងារដោយប្រើឧបករណ៍ផ្សេងៗ,ការប្រើឧបករណ៍ដើម្បីគូរគំនូរឲ្យបានលម្អិត,ការរៀបគម្រោងច្នៃគំរូ និងដឹកនាំគម្រោងសាងសង់,ការបង្កើតសុវត្ថិភាព និងដំណើការរបស់អគារ", "ការស្រាវជ្រាវ និងសរសេរអត្ថបទថ្មីៗ,ការច្រៀងក្នុងក្រុមចម្រៀងអាជីព,ការរៀបចំព័ត៌មានសម្រាប់ទំនាក់ទំនងសាធារណៈ,ការគូរគំនូរេទសភាព ឬគំនូរមនុស្ស,ការបេង្កើតសិល្បះបែបផ្សាយពាណិជ្ជកម្មឬធ្វើផែនការ,ការាំនៅតាមទីសម្តែងនានា ឬធ្វើជាតួសម្តែង", "ការមើលការខុស្រតូវ និងជំរុញទឹកចិត្តអ្នកដ៏ទៃ,ការធ្វើបញ្ជីស្នាម ឬឯកសារផ្សេងៗពាក់ព័ន្ធតួរលេខ,ការដឹកនាំ និងជួយធ្វើសេចក្តីសម្រេចចិត្តជំនួសអ្នកដ៏ទៃ,ការរៀបចំបញ្ជីបុគ្គលិកនិងប្រាក់ខែក្នុងកុំព្យុទ័រ,ការគ្រប់គ្រងគ្រឹះស្ថាន ឬស្ថាប័ន,ការបំពេញតារាងពន្ធសម្រាប់ក្រុមហ៊ុន ឬបុគ្គលិក", "ការបង្រៀនភាសាអង់គ្លេស ឬគណិតវិទ្យា,ការមើលថែទាំកុមារក្នុងមជ្ឈមណ្ឌលកុមារ,ការរៀបចំកម្មវិធីអប់រំឬការបង្រៀន,ការធ្វើការជាមួយសិស្សដែលមានសតិមិនសូវប្រក្រតី,ការបង្រៀនពីជំនាញប្រចាំជីវិតដល់មនុស្សពេញវ័យ,ការបង្រៀនក្រៅម៉ោងដល់សិស្សដែលមិនសូវពូកែ", "ការវិភាគ និងតាមដានសភាពការណ៍វិនិយោគ,ការរៀបចំរបាយការណ៍ហិរញ្ញវត្ថុ,ការទិញ និងលក់ភាគហ៊ុន ឬកម្ចី,ការសិក្សាពីនិន្នាការសេដ្ឋកិច្ច,ការលក់គោលនយោបាយធានារ៉ាប់រង,ការជួយមនុស្សឬបុគ្គលិកអំពីការរៀបចំចូលនិវត្តន៍", "ការពិនិត្យឯកសារហិរញ្ញវត្ថុរកចំណុចដែលខុសឆ្គង,ការរៀបចំគម្រោងស្តីពីការប្រើប្រាស់ដីធ្លីក្នុងទីក្រុង,ការអង្កេតលើដើមឈើបាក់ និងការការពារព្រៃឈើ,ការរក្សាឯកសារគណនីរបស់ភ្នាក់ងាររដ្ឋ,ការស្រាវជ្រាវសម្រាប់ភ្នាក់ងារបង្ការបទល្មើសឧក្រិដ្ឋ,ការស៊ើបអង្កេតបទល្មើសឧក្រិដ្ឋ", "ការពិនិត្យរោគសញ្ញា និងការព្យាបាលជម្ងឺ,ការជួយមនុស្សឲ្យខំប្រឹងជំនះលើការលំបាកនៃពិការភាព,ការធ្វើជាជំនួយការនៅក្នុងមន្ទីរពេទ្យ,ការធ្វើការងារនៅក្នុងក្រុមអ្នកសង្គ្រោះ,ការជួយឲ្យមនុស្សចេះថែទាំសុខភាពមាត់ធ្មេញ,ការស្រាវជ្រាវពីជម្ងឺផ្សេងៗហើយរិះរកវិធីព្យាបាល", "ការបង្រៀនអ្នកទេសចរពីបច្ចេកទេសនានានៅតាមទីកំសាន្ត,ការរៀបចំ និងការបម្រើសេវាអាហារឬភេសជ្ជៈ,ការរៀបចំគម្រោងធ្វើដំណើរកំសាន្តបែបទេសចរណ៍,ការចម្អិនម្ហូបអាហារ សម្រាប់អ្នកទេសចរ,ការនាំភ្ញៀវទេសចរទៅតាមទីកំសាន្ត និងរមណីយដ្ឋាន,ការគ្រប់គ្រងសណ្ឋាគារ ឬផ្ទះសម្រាប់ភ្ញៀវ", "ការជួយសិស្ស និសិ្សតឲ្យចេះបន្ធូអារម្មណ៍ពីភាពតប់ប្រមល់,ការធ្វើការក្នុងគ្លីនិកផ្នែកសុខភាពផ្លូវចិត្ត,ការជួយមនុស្សទាំងពួងក្នុងគ្រាមានវិបត្តិឬគ្រោះអាសន្ន,ការផ្តល់កិច្ចពិគ្រោះផ្នែកអាពាហ៍ពិពាហ៍,ការធ្វើការងារផ្នែកសង្គមកិច្ច,ការធ្វើការជាមួយក្រុមយុវជនងាយរងគ្រោះ", "ការជួសជុលកុំព្យុទ័រ,ការជួយណែនាំឲ្យគេចេះប្រើបច្ចេកវិទ្យាផ្សេងៗ,ការគ្រប់គ្រងប្រព័ន្ធកុំព្យូទ័ររបស់ស្ថាប័ន,ការសរសេរកម្មវិធីកុំព្យូទ័រ និងផ្នែកទន់របស់កុំព្យូទ័រ,ការបង្កើត និងគ្រប់គ្រងគេហទំព័រ,ការរកវិធីថ្មីៗដើម្បីបង្ការការឆ្លងវីរុសក្នុងកុំព្យូទ័រ", "ការជួយដោះស្រាយបញ្ហាផ្នែកច្បាប់ដល់មនុស្សទាំងពួង,ការប្រើឧបករណ៍សម្រាប់ពន្លត់អគ្គីភ័យ,ការប្រមូលវត្ថុតាងសម្រាប់ដោះស្រាយបទល្មើសឧក្រិដ្ឋ,ការពង្រឹងវិស័យច្បាប់ និងបទប្បញ្ញត្តិ,ការរៀបចំនិងដេញដោលមតិលើករណីច្បាប់សម្រាប់កាត់ក្តី,ការការពារប្រជាជន និងផលប្រយោជន៍ពីការរងគ្រោះ", "ការដំឡើងម៉ាស៊ីនផ្សេងៗទៅតាមសៀវភៅណែនាំ,ការផលិតវត្ថុផ្សេងៗអំពីលោហធាតុ និងឈើ,ការបញ្ជារប៉ាស៊ីនកាត់ ឬខួង,ការរើរុះ និងជួសជុលម៉ាស៊ីនឬមេកានិក,ការជួសជុលទូរទស្សន៍ និងគ្រឿងអេឡិចត្រូនិក,ការពិនិត្យ និងវាយតម្លៃគុណភាពទំនិញ", "ការលក់ផលិតផលតាមអីនធើណិត,ការរៀបគម្រោងយុទ្ធនាការផ្សព្វផ្សាយពាណិជ្ជកម្ម,ការរកមូលនិធិសម្រាប់ជួយស្ថាប័ន ឬកន្លែងការងារ,ការពន្យល់បញ្ចុះបញ្ចូលអ្នកដ៏ទៃឲ្យទិញឥវ៉ាន់ផ្សេងៗ,ការជួយមនុស្សទាំងពួងចំពោះការទិញ និងលក់ផ្ទះ,ការពន្យល់ និងបង្ហាញពិវិធីប្រើប្រាស់សម្ភារផ្សេងៗ", "ការដោះស្រាយចំណោទលំបាកៗបែបគណិតវិទ្យា,ការធ្វើពិសោធន៍បែបគីមីវិទ្យា,ការប្រមូល និងវិភាគអំពីសីហាឬរ៉ែ,ការសិក្សាពីធម្មជាតិឬការកកើតនៃភពផែនដី,ការស្រាវជ្រាវ និងអភិវឌ្ឍន៍មុខទំនិញសម្រាប់ក្រុមហ៊ុន,ការបង្កើត និងបកស្រាយផែនទី និងដ្យាក្រាម", "ការជួសជុសថែទាំម៉ាស៊ីនយានយន្ត,ការបើកបរឡានដឹកទំនិញ និងតាក់ស៊ី,ការបើកបរឡានក្រុងពីកន្លែងមួយទៅកន្លែងមួយ,ការជួសជុល និងថែទាំតួរថយន្ត,ការបើកបរយន្តហោះ និងឧទ្ធម្ភាគចក្រ,ការដឹកជញ្ជូនអ្នកដំណើរ និងឥវ៉ាន់"];
+const INTEREST_EN = ["Planting and taking care of plants,Managing and conserving natural resources,Caring for sick animals,Working in a farm or crop field,Studying soil composition,Conducting experiments on crops or plants", "Assembling or installing wooden items,Operating heavy machinery or equipment,Working with various tools,Using tools to draw detailed plans,Planning and leading construction projects,Ensuring building safety and operations", "Researching and writing new articles,Singing in a professional choir,Organizing public relations info,Painting landscapes or portraits,Creating commercial art or designs,Dancing in performances or acting", "Supervising and motivating others,Doing paperwork or numerical documents,Leading and making decisions for others,Managing computer payroll and staff lists,Managing institutions or organizations,Filling out tax forms for companies or staff", "Teaching English or Math,Caring for children in a childcare center,Organizing educational programs,Working with mentally challenged students,Teaching life skills to adults,Tutoring underperforming students", "Analyzing and tracking investments,Preparing financial reports,Buying and selling stocks or loans,Studying economic trends,Selling insurance policies,Helping people plan for retirement", "Reviewing financial documents for errors,Planning urban land use,Inspecting fallen trees and forest protection,Keeping accounting records for govt agencies,Researching for crime prevention,Investigating crimes", "Examining symptoms and treating illnesses,Helping people overcome disabilities,Working as an assistant in a hospital,Working in a rescue team,Helping people maintain dental health,Researching diseases to find cures", "Teaching tourists techniques at resorts,Preparing and serving food or drinks,Planning tourism trips,Cooking food for tourists,Guiding tourists to attractions,Managing hotels or guesthouses", "Helping students relieve stress,Working in a mental health clinic,Helping people in crisis or emergencies,Providing marriage counseling,Working in social services,Working with vulnerable youth", "Repairing computers,Instructing others on using technologies,Managing institutional computer systems,Writing computer programs and software,Creating and managing websites,Finding new ways to prevent computer viruses", "Helping people solve legal issues,Using firefighting equipment,Collecting evidence to solve crimes,Enforcing laws and regulations,Preparing and debating legal cases in court,Protecting citizens and property from harm", "Installing various machines according to manuals,Manufacturing items from metal and wood,Operating cutting or drilling machines,Dismantling and repairing machines or mechanics,Repairing TVs and electronics,Inspecting and evaluating product quality", "Selling products online,Planning advertising campaigns,Fundraising for institutions or workplaces,Persuading others to buy products,Helping people buy and sell houses,Explaining and demonstrating product usage", "Solving complex math problems,Conducting chemistry experiments,Collecting and analyzing minerals or rocks,Studying nature or Earth's formation,Researching and developing products,Creating and interpreting maps and diagrams", "Repairing and maintaining vehicle engines,Driving trucks and taxis,Driving buses from place to place,Repairing and maintaining auto bodies,Piloting airplanes and helicopters,Transporting passengers and luggage"];
+
+const SKILL_KM = ["ការអង្គុយមើលថែសត្វដែលគេចិញ្ចឹម,ការបោចឬដកស្មៅនៅក្នុងសួនដំណាំ,ការឲ្យចំណីសត្វដែលគេចិញ្ចឹម,ការថែទាំសួន ឬដំណាំ,ការកាត់មែកឈើក្នុងសួន ឬតាមដងផ្លូវ,ការដាំដុះដំណាំផ្សេងៗ,ការចិញ្ចឹម និងបង្កាត់ពូជសត្វប្រភេទផ្សេងៗ,ការថែទាំឬកែច្នៃទេសភាពនៅជុំវិញផ្ទះឬអគារ,ការធ្វើស្រែ ឬកសិដ្ឋាន,ការបង្វឹកសត្វដែលគេចិញ្ចឹម", "ការសាងសង់,ការរៀបចំប្រព័ន្ធខ្សែរភ្លើង,ការច្នៃម៉ូត ឬច្នៃគំរូដើមឡើងវិញ,ការជួសជុល,ការតប្រព័ន្ធទុយោទឹក,ការរៀបចំបិទក្រដាសលើជញ្ជាំង,ការវាស់ស្ទង់,ការបកស្រាយពន្យល់អំពីគំរូប្លង់,ការធ្វើគំរូព្រាងរបស់ប្លង់ ឬធ្វើរបាយការណ៍,ការប្រើឧបករណ៍ដែលមានកម្លាំងថាមពល ឬចរន្តអគ្គីសនី", "ការច្រៀង,ការរាំ,ការថតរូប,ការគូរគំនូរ,ការសរសេរ និងតែងនិពន្ធ,ការសម្តែង,ការកែសម្រួលអត្ថបទ,ការច្នៃគំរូ ឬម៉ូត,ការគំនូរដោយប្រើថ្នាំព័ណ៌,ការឆ្លាក់ឬសាក់រូប", "ការត្រួតពិនិត្យដំណើការ,ការសម្របសម្រួលព្រឹត្តការណ៍,ការរៀបចំគម្រោង ឬផែនការ,ការរៀបចំថវិកា,ការដឹកនាំសកម្មភាពអនុវត្តគម្រោង ឬស្ថាប័ន,ការរៀបចំក្រុមមនុស្ស/បុគ្គលិក,ការគ្រប់គ្រងធនធាន,ការរក្សាសៀវភៅ,ការរៀបចំសំណុះឯកសារ,ការជម្រុញទឹកចិត្តរបស់បុគ្គលិក", "ការវាយតម្លៃ,ការបង្វឹកផ្នែកកីឡា,ការបង្រៀន,ការបង្ហាត់,ការរៀបចំមេរៀន,ការលើកទឹកចិត្តមនុស្សដ៏ទៃ,ការពិគ្រោះយោបល់,ការផ្តល់បទពិសោធន៍ និងឱវាទ,ការវាស់ស្ទង់ ឬវាយតម្លៃកម្រិតនៃចំណេះវិជ្ជា,ការពន្យល់ពីគំនិត ឬទស្សនៈផ្សេងៗ", "កិច្ចការខាងគណនេយ្យ,ការធ្វើសម្ភាសន៍ ឬសាកសួរព័ត៌មាន,ការបូកសរុបបញ្ជី និងរៀបចំលិខិតស្នាម ឬឯកសារ,ការវិភាគទិន្នន័យ,ការតាមដានទៅលើការវិនិយោគ,ការគ្រប់គ្រងបញ្ជីសារពើភណ្ឌ,សវនកម្ម,ការរៀបចំផែនការហិរញ្ញវត្ថុ,ការលក់,ការវិនិយោគ", "ការធ្វើយុទ្ធនាការ,ការនិយាយ ឬឃោសនាបញ្ចុះបញ្ចូល,ការត្រួតពិនិត្យលើហេដ្ឋារចនាសម្ព័ន្ធរូបវន្ត,ការរៀបចំផែនការ,ការរាយការណ៍អំពីលទ្ធផល ឬស្នាដៃ,ការអាន និង ពិនិត្យផ្ទៀងផ្ទាត់ឯកសារ,ការប្រមូលចងក្រងស្ថិតិ,ការបញ្ចូលទិន្នន័យ,ការរក្សាទុកឯកសារ,ការវាយតម្លៃលើដំណើការនៃការរីកចម្រើន", "ការជួយយកអាសារអ្នកដ៏ទៃ,កិច្ចការជាគិលានុបដ្ឋាករ,ការព្យបាលរបួស,ការសិក្សាស្រាវជ្រាវ ដើម្បីរិះរកវិធីព្យាបាលជម្ងឺ,ការពិនិត្យ វិភាគលើវត្ថុ ឬសំណាកគំរូ,ការកំណត់រោគសញ្ញាអ្នកជម្ងឺ,ការធ្វើពិសោធន៍,ការព្យាបាលជម្ងឺដោយអារម្មណ៍ ឬកម្លាំងចិត្ត,ការជួសជុល ព្យាបាល ថែទាំសុខភាពមាត់ធ្មេញ,ការចែកចាយឱសថ", "ការកាត់ ឬច្នៃម៉ូតសក់ និងការធ្វើឲ្យមានសុខមាលភាពខ្លួនប្រាណ,ការបង្កើតភាពសប្បាយរីករាយ,ការចម្អិនអាហារ ឬធ្វើនំ,ការបម្រើសេវាផ្សេងៗសម្រាប់មនុស្ស ឬអតិថិជន,ការលេងកីឡាផ្សេងៗ,ការសម្អាតឲ្យមានអនាម័យ,ការថែទាំ,ការជាមគ្គុទេសក៏ទេសចរណ៍,ការរៀបចំផែនការសម្រាប់ព្រឹត្តការណ៍ផ្សេងៗ,ការរៀបចំដំណើរកំសាន្តទៅទីឆ្ងាយ", "ការជួយដោះស្រាយទុក្ខលំបាករបស់អ្នកដ៏ទៃ,ការពិនិត្យតាមដានភាពរីចម្រើនរបស់ភ្ញៀវ,ការស្វែងយល់ពីទឹកចិត្តរបស់នរណាម្នាក់,ការដោះស្រាយបញ្ហា,ការផ្តល់យោបល់ ឬឱវាទ,ការជួយគាំពារដល់ជនពិការ,សកម្មភាពបោះជំរុំ និងការពិគ្រោះយោបល់,ការជួយសម្របសម្រួលដល់ក្រុមការងារ,ការស្តាប់,ការសិក្សាស្វែងយល់ពីឥរិយាថ និងចរិកលក្ខណៈរបស់មនុស្ស", "ការសរសេរកម្មវិធីកុំព្យូទ័រ,ការរចនា ឬបង្កើតគេហទំព័រ,ការជួសជុសកុំព្យូទ័រ,ការវិភាគអំពីប្រព័ន្ធ,ការថែទាំជួសជុលបណ្តាញ,ការសរសេរអត្ថបទតាមបែបបច្ចេកទេស,ការវិភាគទិន្នន័យ,ការបង្កើតផ្នែកទន់របស់កុំព្យូទ័រ,ការប្រើប្រាស់កម្មវិធីរបស់កុំព្យូទ័រដើម្បីបំពេញការងារ,ការបង្កើតបណ្តាញសុវត្ថិភាពសម្រាប់កុំព្យូទ័រ", "ការស្រាវជ្រាវពីជីវប្រវត្តិរបស់បុគ្គលណាម្នាក់,ការពង្រឹង និងបង្កើនសុខមាលភាពក្នុងការរស់នៅរបស់មនុស្ស,ការពង្រឹងបទបញ្ញតិ្ត និងលិខិតបទដ្ឋានផ្សេងៗ,ការស៊ើបអង្កេតបទឧក្រិដ្ឋ,ការយាមកាម ឬការពារទ្រព្យសម្បត្តិ,ការពិនិត្យអង្កេតទៅលើសំណង់ ឬអគារ,ការពន្លត់អគ្គីសភ័យ,ការការពារខ្លួនឯង និងអ្នកដ៏ទៃឲ្យជៀសផុតពីគ្រោះភ័យ,ការគ្រប់គ្រងអាវុធជាតិផ្ទុះ,ការពិគ្រោះ និងផ្តល់មតិយោបល់ចំពោះចំណុចពិសេសអ្វីមួយ", "ការជួសជុលម៉ាស៊ីនដែលខូចខាត,ការផ្គុំដំឡើងសម្ភារ ឬឧបករណ៍,ការដំឡើងបំណែកថ្មីៗនៃវត្ថុ ឬឧបករណ៍អ្វីមួយ,ការថែទាំម៉ាស៊ីន ឬគ្រឿងបរិក្ខារ,ការរៀបចំម៉ាស៊ីន,ការខួង ឬជីក,ការផ្សា,ការកិនកម្ទេច,ការពត់ដំ,ការបញ្ជារគ្រឿងចក្រធន់ធ្ងន់", "ការពន្យល់ភ្សព្វផ្សាយបែបទីផ្សារ,ការពន្យល់ភ្សព្វផ្សាយបែបទីផ្សារ និងពិគ្រោះយោបល់ត្រឡប់,ការឃោសនាលក់ផលិតផលផ្សេងៗ,ការលក់,ការបង្ហាញពីផលិតផលថ្មីៗដល់អតិថិជន រភ្ញៀវ,ការស្វះស្វែងរកមូលនិធិ ឬថវិកាសម្រាប់កិច្ចការអ្វីមួយ,ការសរសេរគម្រោង ឬផែនការ,ការផ្សព្វផ្សាយអំពីព្រឹត្តការណ៍,ការសម្តែងមតិជាសាធារណៈ,ការធ្វើទំនាក់ទំនងគ្នាតាមរយៈគំនិតយោបល់", "ការបង្រៀន,ការបង្កើតថ្មី,ការស្រាវជ្រាវ ឬរុករក,ការសិក្សាពីបាតុភូតចម្លែកៗ,ការស្រាវជ្រាវដោយប្រើគំនិតជ្រៅជ្រះដើម្បីវិភាគរកហេតុផល,ការបង្កើតទ្រឹស្តីបទ ឬសម្មតិកម្ម,ការពិចារណា និងវិភាគលើទិន្នន័យ ឬព័ត៌មាន,ការធ្វើពិសោធន៍,ការស្រាវជ្រាវក្នុងបណ្ណាល័យ,ការរៀបចំប្រព័ន្ធទិន្នន័យ", "ការប៉ាន់ស្មានអំពីរយៈចម្ងាយ,ការគិត និងកំណត់អំពីផ្លូវដែលត្រូវធ្វើដំណើរ,ការបើកបរក្នុងរយៈចម្ងាយឆ្ងាយ,ការបញ្ជារម៉ាស៊ីន ឬគ្រឿងចក្រធន់ធ្ងន់,ការបញ្ជារទូក ឬកាណូត,ការបញ្ជារនាវាធំៗ,ការបញ្ជារថភ្លើង,ការលើកដាក់ឥវ៉ាន់ ឬកញ្ចប់ទំនិញសព្វសារពើ,ការបើកបរយន្តហោះ,ការប្រគល់បញ្ញើ ឬឥវ៉ាន់ទៅដល់អតិថិជន ឬម្ចាស់ទំនិញ"];
+const SKILL_EN = ["Sitting and taking care of pets,Weeding in the garden,Feeding pets,Caring for gardens or crops,Pruning trees in gardens or along roads,Planting various crops,Raising and breeding different types of animals,Maintaining or landscaping around houses or buildings,Farming or running a plantation,Training pets", "Constructing,Arranging electrical wiring,Designing or redesigning prototypes,Repairing,Installing plumbing systems,Applying wallpaper,Surveying,Interpreting and explaining blueprints,Drafting blueprints or writing reports,Using power or electrical tools", "Singing,Dancing,Photography,Painting/Drawing,Writing and composing,Acting,Editing articles,Designing prototypes or fashion,Painting with colors,Carving or tattooing", "Monitoring processes,Coordinating events,Planning projects or plans,Budgeting,Leading project or institutional activities,Organizing teams/staff,Managing resources,Bookkeeping,Organizing files,Motivating staff", "Evaluating,Sports coaching,Teaching,Training,Preparing lessons,Motivating others,Consulting,Providing experience and advice,Measuring or assessing knowledge levels,Explaining ideas or concepts", "Accounting tasks,Conducting interviews or inquiries,Summarizing accounts and preparing documents,Analyzing data,Tracking investments,Managing inventory,Auditing,Financial planning,Selling,Investing", "Campaigning,Public speaking or persuading,Inspecting physical infrastructure,Planning,Reporting results or achievements,Reading and verifying documents,Compiling statistics,Data entry,Record keeping,Evaluating progress processes", "Helping others,Nursing tasks,Treating wounds,Researching to find disease treatments,Examining and analyzing objects or samples,Diagnosing patient symptoms,Conducting experiments,Treating emotional or mental health,Repairing and treating dental health,Distributing medicine", "Cutting or styling hair and personal care,Creating entertainment,Cooking or baking,Providing services to people or customers,Playing various sports,Cleaning for hygiene,Caring,Tour guiding,Planning events,Organizing long-distance trips", "Helping solve others' problems,Monitoring guest progress,Understanding someone's feelings,Problem-solving,Providing advice or counseling,Supporting people with disabilities,Camping and counseling activities,Facilitating teamwork,Listening,Studying and understanding human behavior and traits", "Computer programming,Designing or creating websites,Computer repair,Systems analysis,Network maintenance,Writing technical articles,Data analysis,Developing software,Using computer programs to complete tasks,Creating computer security networks", "Researching someone's biography,Strengthening and improving people's well-being,Enforcing regulations and legal documents,Investigating crimes,Guarding or protecting property,Inspecting buildings or construction,Firefighting,Protecting oneself and others from danger,Managing explosives,Consulting and advising on specific points", "Repairing broken machines,Assembling materials or equipment,Installing new parts of an object or equipment,Maintaining machines or equipment,Setting up machines,Drilling or digging,Welding,Grinding/Crushing,Bending/Forging,Operating heavy machinery", "Marketing presentation,Marketing presentation and feedback consultation,Promoting various products,Selling,Showcasing new products to customers/guests,Fundraising or seeking budget for a task,Writing projects or plans,Promoting events,Public speaking,Communicating through ideas", "Teaching,Innovating,Researching or exploring,Studying strange phenomena,Researching using deep analytical reasoning,Formulating theorems or hypotheses,Considering and analyzing data or info,Conducting experiments,Library research,Organizing database systems", "Estimating distances,Thinking and determining travel routes,Long-distance driving,Operating machines or heavy equipment,Operating boats or canoes,Operating large ships,Operating trains,Loading goods or packages,Piloting airplanes,Delivering packages to customers or owners"];
+
+const VALUE_KM = ["ការអាន និង/ឬការសរសេរកំណាព្យ,ការបង្កើតអ្វីថ្មីនិងមានលក្ខណៈប្លែក ស្អាត និងទាក់ទាញ,ការបំផុសគំនិតអំពីប្រធានបទ ឬអ្វីថ្មីៗ,ការប្រើគំនិតស្រមៃ និងច្នៃប្រឌិតអំពីដំណើការអ្វីមួយ,ការគូរគំនូរ ឬផ្តិតរូប,ការអភិវឌ្ឍជំនាញថ្មីៗដែលធ្វើដោយដៃរបស់អ្នកផ្ទាល់,ការសរសេរ/និពន្ធបតភ្លេង ឬទំនុកច្រៀង,ការបង្កើតផលិតផលថ្មីៗ,ការចូលរួមក្នុងពិធីមហោស្រព ឬការប្រគុំតន្រ្តី,ការទស្សនាសារមន្ទីរ ឬពិព័រណ៌", "ការវិភាគទៅលើទិន្នន័យដេលពាក់ព័ន្ធនឹងតូរលេខ,ការប្រើកុំព្យូទ័រដើម្បីដោះស្រាយ ឬបំពេញកិច្ចការ,ការប្រើទិន្នន័យឬស្ថិតិក្នុងការងារ និងជីវិតប្រចាំថ្ងៃ,ការយល់ពីចំណោទគណិតវិទ្យាដែលលំបាកស្មុគ្រស្មាញ,ការគិតដោយប្រើហេតុផលតាមចំណេះដឹង និងប្រាជ្ញា,ជាអ្នកឯកទេសក្នុងការសិក្សា និងចងចាំលេខនពន្ធ,ការគិតលេខ និងបញ្ចូលទិន្នន័យយ៉ាងងាយស្រួល,គ្រប់គ្រងលុយកាក់ដោយប្រសិទ្ធភាព,ការយល់និងអនុវត្តបញ្ញតិ និងការណែនាំបែបស្មុគ្រស្មាញ,អនុវត្តកិច្ចការដោយភាពល្អិតល្អន់គ្រប់ពេលវេលា", "ការបំពេញកិច្ចការបែបស្មគ្រចិត្ត,ការយោគយល់ និងសណ្តោសចំពោះបញ្ហារបស់អ្នកដ៏ទៃ,ការផ្តល់អំណោយសង្រ្គោះដោយចិត្តជ្រះថ្លា,ការរំលែកពេលវេលា និងប្រាក់ជាមួយមិត្តភក្តិ/អ្នកដ៏ទៃ,ការធ្វើកិច្ចការ និងបម្រើសេវាសង្គមក្នុងវិស័យនានា,ការជជែក ឬប្រឹក្សាយោបល់ជាមួយមនុស្សនានា,បង្រៀន ឬបង្ហាត់,ធានាសុវត្ថិភាព និងភាពសុខដមជាលក្ខណៈសាធារណៈ,ការធ្វើជាគំរូដ៏ល្អសម្រាប់មនុស្សដ៏ទៃ,ការជួយទុក្ខធុរៈអ្នកដែលមានការលំបាកក្នុងគ្រាអាសន្ន", "ការធ្វើសេចក្តីសម្រេចចិត្តចំពោះកិច្ចការដ៏មានសារសំខាន់,ការធ្វើជាអ្នកដឹកនាំ ឬមានភាពជាអ្នកដឹកនាំ,ចូលចិត្តធ្វើជាចៅហ្វាយនាយជាងធ្វើជាបុគ្គលិកធម្មតា,ការគ្រប់គ្រងគម្រោងការ ផែនការ ឬកិច្ចការក្រុម/ក្រុមហ៊ុន,រៀបចំផែនការសម្រាប់អនុវត្តកិច្ចការលក្ខណៈយូរអង្វែង,ក្លាយជាអ្នកឯកទេសក្នុងវិស័យជំនួញ ឬធុរកិច្ច,មានឥទ្ធិពលលើអ្នកដ៏ទៃ,ក្លាយជាអ្នកជោគជ័យក្នុងការងារ និងប្រាក់ចំណូលខ្ពស់,ការគ្រប់គ្រងកិច្ចការរបស់មនុស្សដ៏ទៃ,ការទទួលស្គាល់ការលើកទឹកចិត្តពីប្រធានឬអ្នកដឹកនាំដ៏ទៃទៀត", "ការបង្ហាញ/អនុវត្តកិច្ចការប្រើភ្នែកនិងដៃក្នុងពេលតែមួយ,ការធ្វើជាអ្នកដែលបំពេញកិច្ចការនៅខាងក្រៅការិយាល័យ,ចូលរួមក្នុងព្រឹត្តការណ៍ប្រកួតកីឡាផ្សេងៗ,ជំនាញជាក់លាក់ពាក់ព័ន្ធនឹងការបើកបរឬបញ្ហាយានយន្ត,ការធ្វើការពាក់ព័ន្ធនឹងគ្រឿងចក្រ ឬគ្រឿងអេឡិចត្រូនិច,ការធ្វើ ឬបង្កើតវត្ថុដោយដៃ,ការដាំដុះដំណាំ ឬដើមឈើ,ការប្រើវត្ថុ ឬឧបករណ៍ផ្ទាល់ដៃដូចជា ញញួរ/ប្រដាប់ខួង,ដំណើរការគ្រឿងចក្រ ឬម៉ាស៊ីនធំៗ,អាចជួសជុល ឬថែទាំសម្ភារប្រើប្រាស់នៅក្នុងផ្ទះ", "ការខិតខំសិក្សារាល់គ្រប់មុខវិជ្ជាពាក់ព័ន្ធនឹងវិទ្យាសាស្ត្រ,ការបង្កើត និងបកស្រាយអំពីផែនទីឬគំនូរក្រាហ្វិច,ការសិក្សា/ធ្វើតេស្តសាកល្បងលើទ្រឹស្តីបទឬសម្មតិកម្មផ្សេងៗ,ការប្រមូលទិន្នន័យអំពីជីវវិទ្យា,ការខិតខំស្វែងយល់អំពីជីវិតសត្វនិងរុក្ខជាតិលើផែនដី,ការធ្វើពិសោធន៍បែបវិទ្យាសាស្ត្រ,ការអានឯកសារពីការរកឃើញក្នុងវិស័យវិទ្យាសាស្ត្រ/ឱសថ,ការអានអំពីការវិវត្តនៃបច្ចេកវិទ្យាទំនើប,ការងារពាក់ព័ន្ធនឹងចំណេះដឹងឬដំណើការបែបវិទ្យាសាស្ត្រ,ការដោះស្រាយបញ្ហាដែលមានលក្ខណៈស្មុគ្រស្មាញ"];
+const VALUE_EN = ["Reading and/or writing poetry,Creating new/unique/attractive things,Brainstorming topics or new ideas,Using imagination and creativity about a process,Drawing or taking photos,Developing new skills made by your own hands,Writing/composing music or lyrics,Creating new products,Participating in festivals or concerts,Visiting museums or exhibitions", "Analyzing numerical data,Using computers to solve or complete tasks,Using data or statistics in work and daily life,Understanding complex math problems,Thinking logically based on knowledge and wisdom,Being an expert in studying and remembering numbers,Calculating and entering data easily,Managing money effectively,Understanding and applying complex rules and instructions,Executing tasks with precision at all times", "Doing volunteer work,Understanding and having compassion for others' problems,Giving charitable donations generously,Sharing time and money with friends/others,Doing social work and serving in various fields,Chatting or consulting with people,Teaching or training,Ensuring public safety and harmony,Being a good role model for others,Helping those in distress during emergencies", "Making decisions on highly important tasks,Being a leader or having leadership qualities,Preferring to be a boss rather than a regular employee,Managing projects/plans or team/company tasks,Preparing long-term action plans,Becoming an expert in business or commerce,Influencing others,Becoming successful in career with high income,Managing other people's tasks,Receiving recognition and encouragement from other leaders", "Displaying/performing tasks using eyes and hands simultaneously,Being someone who works outside the office,Participating in various sports events,Having specific skills related to driving or vehicles,Working with machinery or electronics,Making or creating objects by hand,Planting crops or trees,Using hand tools like hammers/drills,Operating large machinery or equipment,Able to repair or maintain household appliances", "Striving to study all science-related subjects,Creating and interpreting maps or graphics,Studying/testing various theorems or hypotheses,Collecting biological data,Striving to understand animal and plant life on Earth,Conducting scientific experiments,Reading documents on scientific/medical discoveries,Reading about the evolution of modern technology,Jobs involving scientific knowledge or processes,Solving complex problems"];
+
+const PERS_KM = ["ស្វាហាប់ និងចូលចិត្តការងារអនុវត្តជាក់ស្តែង,ចូលចិត្តធ្វើការដោយប្រើកម្លាំងកាយ ឬឧបករណ៍,ប្រាកដនិយម និងនិយាយទៀងត្រង់", "ចូលចិត្តវិភាគ និងដោះស្រាយបញ្ហាលំបាកៗ,ចូលចិត្តសិក្សាស្រាវជ្រាវ និងស្វែងយល់ពីវិទ្យាសាស្ត្រ,ធ្វើការដោយផ្អែកលើហេតុផល និងភស្តុតាងច្បាស់លាស់", "មានគំនិតច្នៃប្រឌិតខ្ពស់ និងចូលចិត្តសិល្បៈ,ចូលចិត្តធ្វើអ្វីដែលប្លែកពីគេ និងមានសេរីភាព,មានមនោសញ្ចេតនា និងពោរពេញដោយការស្រមើស្រមៃ", "ចូលចិត្តជួយយកអាសារ និងបង្រៀនអ្នកដទៃ,រួសរាយរាក់ទាក់ និងចូលចិត្តធ្វើការងារជាក្រុម,ផ្តល់តម្លៃខ្ពស់ដល់ទំនាក់ទំនងសង្គម និងការយោគយល់គ្នា", "មានមហិច្ឆតា និងចូលចិត្តដឹកនាំគេ,ពូកែខាងនិយាយបញ្ចុះបញ្ចូល និងមានទំនុកចិត្តលើខ្លួនឯង,ចូលចិត្តការប្រកួតប្រជែង និងមានគោលដៅធំ", "មានសណ្តាប់ធ្នាប់ និងមានការប្រុងប្រយ័ត្ន,ចូលចិត្តធ្វើការងារដែលមានការណែនាំ និងកាលវិភាគច្បាស់លាស់,យកចិត្តទុកដាក់លើព័ត៌មានលម្អិត និងទិន្នន័យជាក់លាក់"];
+const PERS_EN = ["Energetic and prefer hands-on practical work,Like working with physical strength or tools,Realistic and speak directly", "Like analyzing and solving difficult problems,Enjoy researching and understanding science,Work based on clear reasons and evidence", "Highly creative and love art,Like doing unique things and having freedom,Emotional and full of imagination", "Like helping and teaching others,Friendly and enjoy teamwork,Highly value social relationships and mutual understanding", "Ambitious and like leading others,Good at persuading and self-confident,Enjoy competition and have big goals", "Organized and careful,Like working with clear instructions and schedules,Pay attention to details and specific data"];
+
+const QUIZ_DATABASE = {
+  interest: { title: "តេស្តចំណូលចិត្ត (៩៦ សំណួរ)", title_en: "Interest Test (96 Qs)", prompt_km: "តើអ្នកមានអារម្មណ៍យ៉ាងណាចំពោះ...", prompt_en: "How do you feel about...", options: [ {label:"ខ្លាំង", label_en:"Strong", val:4}, {label:"ល្មម", label_en:"Moderate", val:3}, {label:"តិច", label_en:"Little", val:2}, {label:"អត់", label_en:"None", val:1} ], questions: INTEREST_KM.flatMap((str, c) => str.split(',').map((q, i) => ({ q: q, q_en: INTEREST_EN[c].split(',')[i], c: c }))) },
+  skill: { title: "តេស្តជំនាញពីកំណើត (១៦០ សំណួរ)", title_en: "Aptitude & Skill Test (160 Qs)", prompt_km: "តើអ្នកមានជំនាញយ៉ាងណាចំពោះកិច្ចការខាងក្រោម៖", prompt_en: "How skilled are you in the following task:", options: [ {label:"ខ្លាំង", label_en:"Strong", val:4}, {label:"បង្គួរ", label_en:"Fair", val:3}, {label:"តិច", label_en:"Little", val:2}, {label:"គ្មាន", label_en:"None", val:1} ], questions: SKILL_KM.flatMap((str, c) => str.split(',').map((q, i) => ({ q: q, q_en: SKILL_EN[c].split(',')[i], c: c }))) },
+  value: { title: "តេស្តគុណតម្លៃ (៦០ សំណួរ)", title_en: "Work Values Test (60 Qs)", prompt_km: "តើអ្នកគិតថាចំណុចខាងក្រោមនេះ មានសារៈសំខាន់បែបណាចំពោះអ្នក៖", prompt_en: "How important is the following to you:", options: [ {label:"សំខាន់ខ្លាំង", label_en:"Very Important", val:4}, {label:"សំខាន់", label_en:"Important", val:3}, {label:"សំខាន់ល្មម", label_en:"Moderately", val:2}, {label:"មិនសំខាន់", label_en:"Not Important", val:1} ], questions: VALUE_KM.flatMap((str, c) => str.split(',').map((q, i) => ({ q: q, q_en: VALUE_EN[c].split(',')[i], c: c }))) },
+  personality: { title: "តេស្តបុគ្គលិកលក្ខណៈ (១៨ សំណួរ)", title_en: "Personality Test (18 Qs)", prompt_km: "ខ្ញុំគិតថា ខ្លួនខ្ញុំគឺជាមនុស្ស...", prompt_en: "I consider myself to be someone who...", options: [ {label:"ត្រូវខ្លាំង", label_en:"Very True", val:4}, {label:"មធ្យម", label_en:"Neutral", val:2}, {label:"មិនត្រូវទាល់តែសោះ", label_en:"Not True", val:0} ], questions: PERS_KM.flatMap((str, c) => str.split(',').map((q, i) => ({ q: q, q_en: PERS_EN[c].split(',')[i], c: c }))) }
+};
+
+// 4. FIREBASE BACKEND CONFIGURATION
+let state = { 
+    apiKey: 'AIzaSyCSqjCFEXRcBH75KEhV38k46s-5weBmYc8', 
+    currentPage: 'home', chatHistory: [], messageCount: 0, maxFreeMessages: 10, isPremium: false, 
+    user: { uid: null, name: null }, activeQuiz: null, currentIndex: 0, answers: {}, 
+    scores: { interest: Array(16).fill(0), skill: Array(16).fill(0), value: Array(6).fill(0), personality: Array(6).fill(0) },
+    expertMode: { active: false, sectorName: '' } 
+};
+
+// ⚠️ សូមយកកូនសោរពី Firebase Project របស់អ្នកមកជំនួសត្រង់នេះ
+const firebaseConfig = {
+  apiKey: "AIzaSyCujXsHv3jad0G9HzS79Hp3fDV-M0QIPks",
+  authDomain: "my-career-path-fa737.firebaseapp.com",
+  projectId: "my-career-path-fa737",
+  storageBucket: "my-career-path-fa737.firebasestorage.app",
+  messagingSenderId: "578694593752",
+  appId: "1:578694593752:web:3d0a07539d88df16de2bad"
+};
+let auth, db;
+if(firebaseConfig.apiKey !== "ដាក់_API_KEY_ទីនេះ") {
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+}
+
+// 5. Navigation & Auth Functions
+function showPage(pageId) { 
+    document.querySelectorAll('.page').forEach(el => el.classList.remove('active')); 
+    const target = document.getElementById('page-' + pageId);
+    if(target) target.classList.add('active'); 
+    state.currentPage = pageId; window.scrollTo(0,0); 
+    const mobileMenu = document.getElementById('mobileMenu');
+    if(mobileMenu && !mobileMenu.classList.contains('hidden')) toggleMobileMenu();
+    const desktopSearch = document.getElementById('desktopSearchInput');
+    const mobileSearch = document.getElementById('mobileSearchInput');
+    if(desktopSearch) desktopSearch.value = '';
+    if(mobileSearch) mobileSearch.value = '';
+    handleGlobalSearch('');
+}
+
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    if(menu.classList.contains('hidden')) { menu.classList.remove('hidden'); menu.classList.add('flex'); document.body.style.overflow = 'hidden'; document.documentElement.style.overflow = 'hidden'; } 
+    else { menu.classList.add('hidden'); menu.classList.remove('flex'); document.body.style.overflow = ''; document.documentElement.style.overflow = ''; }
+}
+
+function toggleTheme() {
+    const body = document.body; body.classList.toggle('light-mode'); const isLight = body.classList.contains('light-mode');
+    const themeBtn = document.getElementById('themeBtn'); if(themeBtn) { themeBtn.textContent = isLight ? '🌙' : '☀️'; themeBtn.title = isLight ? 'ប្តូរទៅម៉ូតងងឹត' : 'ប្តូរទៅម៉ូតភ្លឺ'; }
+    const mobileThemeBtn = document.getElementById('mobileThemeBtn'); if(mobileThemeBtn) mobileThemeBtn.innerHTML = isLight ? '🌙 ម៉ូតងងឹត' : '☀️ ម៉ូតភ្លឺ';
+    const mobileMenu = document.getElementById('mobileMenu'); if(mobileMenu) { if(isLight) mobileMenu.classList.add('light-mode-menu'); else mobileMenu.classList.remove('light-mode-menu'); }
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+}
+
+let currentSlide = 0; let slideInterval; const totalSlides = 3;
+function updateCarousel() {
+    const track = document.getElementById('carouselTrack');
+    if(track) {
+        track.style.transform = `translateX(-${currentSlide * 100}%)`;
+        for(let i=0; i<totalSlides; i++) { let dot = document.getElementById('dot'+i); if(dot) { dot.classList.remove('bg-white'); dot.classList.add('bg-white/50'); if(i === currentSlide) { dot.classList.remove('bg-white/50'); dot.classList.add('bg-white'); } } }
+    }
+}
+function nextSlide() { currentSlide = (currentSlide + 1) % totalSlides; updateCarousel(); }
+function goToSlide(index) { currentSlide = index; updateCarousel(); pauseCarousel(); startCarousel(); }
+function startCarousel() { if(!slideInterval) slideInterval = setInterval(nextSlide, 3500); }
+function pauseCarousel() { clearInterval(slideInterval); slideInterval = null; }
+
+function showToast(msg) { const t = document.getElementById('toast'); t.querySelector('div').textContent = msg; t.classList.remove('hidden'); setTimeout(() => t.classList.add('hidden'), 3000); }
+function renderCareers() {
+  document.getElementById('careerGrid').innerHTML = 
+    CAREER_CLUSTERS.map((c, i) => `
+      <div class="job-card glass rounded-2xl p-5 border flex flex-col items-center text-center" 
+           style="border-color:${c.color}30">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center text-2xl mb-4" 
+             style="background:${c.color}15; border:1px solid ${c.color}40">
+          ${c.icon}
+        </div>
+        <h3 class="font-bold text-white text-base md:text-lg mb-2 khmer-title lang-text" 
+            data-km="${CLUSTER_NAMES_KM[i]}" 
+            data-en="${CLUSTER_NAMES_EN[i]}">
+          ${currentLang === 'en' ? CLUSTER_NAMES_EN[i] : CLUSTER_NAMES_KM[i]}
+        </h3>
+        <p class="text-sm text-slate-400 leading-relaxed khmer lang-text"
+           data-km="${c.desc}"
+           data-en="${c.desc_en}">
+          ${currentLang === 'en' ? c.desc_en : c.desc}
+        </p>
+        <button onclick="openAiExpert('${CLUSTER_NAMES_KM[i]}','${CLUSTER_NAMES_EN[i]}','${c.icon}')" 
+                class="mt-auto pt-4 text-sm font-bold transition-colors khmer cursor-pointer lang-text" 
+                data-km="សួរ AI អំពីវិស័យនេះ →" 
+                data-en="Ask AI about this →" 
+                style="color:${c.color}; background:none; border:none;">
+          ${currentLang === 'en' ? 'Ask AI about this →' : 'សួរ AI អំពីវិស័យនេះ →'}
+        </button>
+      </div>`
+    ).join('');
+}
+// Backend Auth UI Update
+function updateLoginUI(user) {
+    const loginBtn = document.getElementById('loginBtn');
+    const mobileLoginBtn = document.getElementById('mobileLoginBtn');
+    if(user) {
+        state.user.uid = user.uid; state.user.name = user.name;
+        const loginTxt = currentLang === 'en' ? 'LOGOUT' : 'ចាកចេញ';
+        if(loginBtn) { loginBtn.innerHTML = `<span>🟢</span> ${state.user.name} (${loginTxt})`; loginBtn.classList.add('border-cyan-400'); }
+        if(mobileLoginBtn) mobileLoginBtn.innerHTML = `🟢 ${state.user.name} (${loginTxt})`;
+    } else {
+        state.user.uid = null; state.user.name = null; state.isPremium = false;
+        if(loginBtn) { loginBtn.innerHTML = `<span>👤</span> <span class="lang-text" data-km="ចូលគណនី" data-en="LOGIN">ចូលគណនី</span>`; loginBtn.classList.remove('border-cyan-400'); }
+        if(mobileLoginBtn) mobileLoginBtn.innerHTML = `👤 ចូលគណនី`;
+        document.getElementById('lock-skill').classList.remove('hidden'); document.getElementById('lock-value').classList.remove('hidden'); document.getElementById('lock-personality').classList.remove('hidden'); document.getElementById('lock-report').classList.remove('hidden');
+    }
+}
+
+function showLoginModal() { document.getElementById('loginModal').classList.remove('hidden'); }
+function hideLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
+
+function handleLoginClick() {
+    if(state.user.uid) {
+        if(auth) { auth.signOut().then(() => { updateLoginUI(null); showToast(currentLang === 'km' ? '✅ បានចាកចេញពីគណនី!' : '✅ Logged out successfully!'); }); } 
+        else { updateLoginUI(null); showToast(currentLang === 'km' ? '✅ បានចាកចេញពីគណនី!' : '✅ Logged out successfully!'); }
+    } else { showLoginModal(); }
+}
+
+function handleGoogleLogin() { 
+    if(auth) {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).then((result) => {
+            const user = result.user;
+            db.collection('users').doc(user.uid).set({ name: user.displayName, email: user.email, lastLogin: firebase.firestore.FieldValue.serverTimestamp() }, {merge: true});
+            hideLoginModal(); showToast(currentLang === 'km' ? '✅ ចូលគណនីបានជោគជ័យ!' : '✅ Logged in successfully!');
+        }).catch(err => alert("Login Error: " + err.message));
+    } else {
+        updateLoginUI({uid: "user_123", name: "យុវជន កម្ពុជា"}); hideLoginModal(); showToast(currentLang === 'km' ? '✅ ចូលគណនី (Simulated)!' : '✅ Logged in (Simulated)!');
+    }
+}
+
+// Payment UI Update
+function unlockPremiumFeatures() {
+    state.isPremium = true; 
+    document.getElementById('lock-skill').classList.add('hidden'); document.getElementById('lock-value').classList.add('hidden'); document.getElementById('lock-personality').classList.add('hidden'); document.getElementById('lock-report').classList.add('hidden'); 
+}
+
+function simulatePayment() { 
+    unlockPremiumFeatures();
+    if(auth && state.user.uid) {
+        db.collection('users').doc(state.user.uid).set({ isPremium: true }, {merge: true});
+    }
+    hidePaymentModal(); 
+    showToast(currentLang === 'km' ? '🎉 ការទិញកញ្ចប់ Premium ទទួលបានជោគជ័យ!' : '🎉 Premium Plan Unlocked successfully!'); 
+}
+
+function hidePaymentModal() { document.getElementById('paymentModal').classList.add('hidden'); }
+
+// បង្ហាញ Payment Modal + fill UID ស្វ័យប្រវត្តិ
+function showPaymentModal() {
+    const uid = state.user.uid;
+    const uidEl = document.getElementById('modalUidValue');
+    if(uid && uidEl) {
+        uidEl.textContent = uid;
+        uidEl.style.color = '#c084fc';
+    } else if(uidEl) {
+        uidEl.textContent = currentLang === 'km' ? '— Login ជាមុន —' : '— Please Login first —';
+        uidEl.style.color = '#64748b';
+    }
+    document.getElementById('paymentModal').classList.remove('hidden');
+}
+
+// Copy UID ទៅ Clipboard (format: UID:xxxx)
+function copyUID() {
+    const uid = state.user.uid;
+    if(!uid) { showToast(currentLang==='km' ? '⚠️ សូម Login មុនសិន!' : '⚠️ Please Login first!'); return; }
+    const textToCopy = 'UID:' + uid;
+    if(navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            showToast(currentLang==='km' ? '✅ Copy UID រួចហើយ! Paste ក្នុង Bot ✓' : '✅ UID Copied! Paste in Bot ✓');
+        }).catch(() => fallbackCopy(textToCopy));
+    } else { fallbackCopy(textToCopy); }
+}
+function fallbackCopy(text) {
+    const el = document.createElement('textarea');
+    el.value = text; el.style.position = 'fixed'; el.style.opacity = '0';
+    document.body.appendChild(el); el.focus(); el.select();
+    try { document.execCommand('copy'); showToast(currentLang==='km' ? '✅ Copy UID រួចហើយ!' : '✅ UID Copied!'); }
+    catch(e) { showToast('❌ Copy failed — please copy manually'); }
+    document.body.removeChild(el);
+}
+
+// AI Chat Functions
+function showApiModal() { document.getElementById('apiModal').classList.remove('hidden'); if (state.apiKey !== 'ដាក់_API_KEY_របស់អ្នកនៅទីនេះ') document.getElementById('apiKeyInput').value = state.apiKey; }
+function hideApiModal() { document.getElementById('apiModal').classList.add('hidden'); }
+function saveApiKey() { const key = document.getElementById('apiKeyInput').value.trim(); if (!key) { showToast(currentLang==='km'?'⚠️ សូមបញ្ជូល API Key!':'⚠️ Please enter API Key!'); return; } state.apiKey = key; hideApiModal(); showToast(currentLang==='km'?'✅ API Key រក្សាទុករួចហើយ!':'✅ API Key saved!'); }
+
+function openAiExpert(careerNameKm, careerNameEn, icon) { state.expertMode.active = true; state.expertMode.sectorName = currentLang === 'en' ? careerNameEn : careerNameKm; document.getElementById('expertIcon').textContent = icon; document.getElementById('expertTitle').textContent = currentLang === 'en' ? `${careerNameEn} Expert` : `អ្នកជំនាញ ${careerNameKm}`; const modal = document.getElementById('aiExpertModal'); modal.style.display = 'flex'; modal.classList.remove('hidden'); clearExpertChat(false); }
+function closeAiExpert() { const modal = document.getElementById('aiExpertModal'); modal.style.display = 'none'; modal.classList.add('hidden'); state.expertMode.active = false; }
+async function sendExpertMessage() {
+    const input = document.getElementById('expertChatInput'); const text = input.value.trim(); if (!text) return;
+    if (!state.isPremium && state.messageCount >= state.maxFreeMessages) { showPaymentModal(); return; }
+    input.value = ''; addExpertMessage('user', text); state.chatHistory.push({ role: 'user', content: text });
+    if (!state.isPremium) { state.messageCount++; document.getElementById('expertMsgCounterDisplay').textContent = currentLang==='km'? `សំណួរឥតគិតថ្លៃ៖ ${state.messageCount}/${state.maxFreeMessages}` : `Free Qs: ${state.messageCount}/${state.maxFreeMessages}`; }
+    if (!state.apiKey || state.apiKey === 'ដាក់_API_KEY_របស់អ្នកនៅទីនេះ') { showExpertTyping(); setTimeout(() => { removeExpertTyping(); addExpertMessage('ai', currentLang==='km'?`⚠ ត្រូវការ API Key ដើម្បីប្រើ AI។\n\nសូមចុចប៊ូតុង **⚙ API** នៅខាងលើ។`:`⚠ API Key required to use AI.\n\nPlease click **⚙ API** button above.`); }, 800); return; }
+    showExpertTyping(); document.getElementById('expertSendBtn').disabled = true;
+    try {
+        const geminiHistory = state.chatHistory.map(msg => ({ role: msg.role === 'assistant' ? 'model' : 'user', parts: [{ text: msg.content }] }));
+        const sysPrompt = currentLang === 'en' ? `You are an elite career counselor and an absolute industry expert in the field of '${state.expertMode.sectorName}'. Introduce yourself naturally as an expert in this field and share deep, practical insights, local opportunities in Cambodia, and real-world advice. Respond ONLY in English. End your response with ONE engaging question.` : `អ្នកគឺជាទីប្រឹក្សាអាជីពដ៏ឆ្នើម និងជាអ្នកជំនាញជាន់ខ្ពស់ប្រចាំវិស័យ '${state.expertMode.sectorName}'។ ចូរណែនាំខ្លួនជាអ្នកជំនាញក្នុងវិស័យនេះ ហើយចែករំលែកបទពិសោធន៍ពិតៗ ឱកាសការងារនៅកម្ពុជា និងដំបូន្មានជាក់ស្តែង។ សូមឆ្លើយតបជាភាសាខ្មែរប៉ុណ្ណោះ (ហាមប្រើភាសាថៃ ឬចិន)។ សូមបញ្ចប់ការឆ្លើយតបរបស់អ្នកជាមួយនឹងសំណួរទាក់ទាញមួយ។`;
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${state.apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ systemInstruction: { parts: [{ text: sysPrompt }] }, contents: geminiHistory }) });
+        const data = await response.json(); removeExpertTyping();
+        if (data.error) addExpertMessage('ai', `❌ Error: ${data.error.message}`); else { let reply = data.candidates[0].content.parts[0].text; state.chatHistory.push({ role: 'assistant', content: reply }); addExpertMessage('ai', reply); }
+    } catch (err) { removeExpertTyping(); addExpertMessage('ai', `❌ Connection error។ \n\nError: ${err.message}`); }
+    document.getElementById('expertSendBtn').disabled = false;
+}
+function addExpertMessage(role, text) { const container = document.getElementById('expertChatMessages'); const div = document.createElement('div'); div.className = `flex gap-4 msg-in ${role === 'user' ? 'justify-end' : ''}`; const formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>').replace(/\n/g, '<br>'); if (role === 'user') div.innerHTML = `<div class="msg-user px-5 py-4 max-w-sm md:max-w-xl"><p class="text-base text-slate-200 khmer leading-relaxed text-left">${formattedText}</p></div><div class="w-10 h-10 rounded-full flex-shrink-0 bg-slate-700 flex items-center justify-center text-lg">👤</div>`; else div.innerHTML = `<div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-lg font-black" style="background:linear-gradient(135deg,#00f0ff,#b44fff)">AI</div><div class="msg-ai rounded-3xl rounded-bl-sm px-5 py-4 max-w-sm md:max-w-xl"><p class="text-base text-slate-200 khmer leading-relaxed text-left">${formattedText}</p></div>`; container.appendChild(div); container.scrollTop = container.scrollHeight; }
+function showExpertTyping() { const container = document.getElementById('expertChatMessages'); const div = document.createElement('div'); div.id = 'expertTypingIndicator'; div.className = 'flex gap-4 msg-in'; div.innerHTML = `<div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-lg font-black" style="background:linear-gradient(135deg,#00f0ff,#b44fff)">AI</div><div class="msg-ai rounded-3xl rounded-bl-sm px-5 py-4 inline-flex"><div class="flex gap-2 items-center"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`; container.appendChild(div); container.scrollTop = container.scrollHeight; }
+function removeExpertTyping() { const indicator = document.getElementById('expertTypingIndicator'); if (indicator) indicator.remove(); }
+function clearExpertChat(showTst=true) { state.chatHistory = []; if(!state.isPremium) document.getElementById('expertMsgCounterDisplay').textContent = currentLang==='km'?`សំណួរឥតគិតថ្លៃ៖ ${state.messageCount}/${state.maxFreeMessages}`:`Free Qs: ${state.messageCount}/${state.maxFreeMessages}`; let welcomeMsg = currentLang === 'en' ? `Hello! I am an industry expert in <strong>${state.expertMode.sectorName}</strong>. <br><br>What would you like to know about careers, skills, or opportunities in this field?` : `សួស្ដី! ខ្ញុំគឺជាអ្នកជំនាញឯកទេសប្រចាំវិស័យ <strong>${state.expertMode.sectorName}</strong>។ <br><br>តើអ្នកចង់ដឹងអ្វីខ្លះពីឱកាសការងារ ឬការសិក្សាក្នុងវិស័យនេះ?`; document.getElementById('expertChatMessages').innerHTML = `<div class="flex gap-4 msg-in"><div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-lg font-black" style="background:linear-gradient(135deg,#00f0ff,#b44fff)">AI</div><div class="msg-ai rounded-3xl rounded-bl-sm px-5 py-4 max-w-sm md:max-w-xl"><p class="khmer text-base text-slate-200 leading-relaxed text-left">${welcomeMsg}</p></div></div>`; if(showTst) showToast(currentLang==='km'?'🗑 បានសម្អាតការសន្ទនាថ្មី!':'🗑 Chat cleared!'); }
+
+// Quiz Engine
+function openTestIntro(type) {
+    if (type !== 'interest' && !state.isPremium) { showPaymentModal(); return; }
+    if (!state.user.uid) { showLoginModal(); showToast(currentLang === 'km' ? '⚠️ សូមចូលគណនីជាមុនសិន!' : '⚠️ Please login first!'); return; }
+    
+    state.activeQuiz = type; state.currentIndex = 0; if(!state.answers[type]) state.answers[type] = [];
+    const dbData = QUIZ_DATABASE[type]; document.getElementById('intro-title').textContent = currentLang === 'en' && dbData.title_en ? dbData.title_en : dbData.title;
+    let desc_km = `កម្រងសំណួរនេះមាន <b>${dbData.questions.length} សំណួរ</b>។<br><br><b>របៀបធ្វើតេស្ត៖</b><br>សូមអានសំណួរនីមួយៗឱ្យបានម៉ត់ចត់ រួចជ្រើសរើសចម្លើយមួយដែលស័ក្តិសមនឹងអ្នកបំផុតក្នុងចំណោមជម្រើស (`; desc_km += dbData.options.map(o => o.label).join(' | ') + `)។ សូមឆ្លើយដោយភាពស្មោះត្រង់ ដើម្បីឱ្យប្រព័ន្ធអាចគណនាលទ្ធផលបានត្រឹមត្រូវ ១០០%។`; let desc_en = `This assessment has <b>${dbData.questions.length} questions</b>.<br><br><b>How to take the test:</b><br>Please read each question carefully and choose the option that best describes you (`; desc_en += dbData.options.map(o => o.label_en).join(' | ') + `). Please answer honestly so the system can calculate your results 100% accurately.`; 
+    document.getElementById('intro-desc').innerHTML = currentLang === 'en' ? desc_en : desc_km;
+    document.getElementById('quiz-intro').classList.remove('hidden'); document.getElementById('quiz-engine').classList.add('hidden'); showPage('quiz');
+}
+function startQuizEngine() { document.getElementById('quiz-intro').classList.add('hidden'); document.getElementById('quiz-engine').classList.remove('hidden'); renderQuestion(); }
+function renderQuestion() {
+    const type = state.activeQuiz; const qData = QUIZ_DATABASE[type].questions[state.currentIndex]; const total = QUIZ_DATABASE[type].questions.length; const dbData = QUIZ_DATABASE[type];
+    document.getElementById('quiz-progress-text').textContent = currentLang === 'en' ? `Question ${state.currentIndex + 1}/${total}` : `សំណួរទី ${state.currentIndex + 1}/${total}`; document.getElementById('quiz-progress-bar').style.width = `${((state.currentIndex + 1)/total)*100}%`; 
+    document.getElementById('quiz-prompt').textContent = currentLang === 'en' ? dbData.prompt_en : dbData.prompt_km;
+    document.getElementById('question-text').textContent = currentLang === 'en' && qData.q_en ? qData.q_en : qData.q;
+    const optsContainer = document.getElementById('options-container'); optsContainer.innerHTML = ''; const currentAnswer = state.answers[type][state.currentIndex];
+    const numOptions = QUIZ_DATABASE[type].options.length; const baseClasses = "grid grid-cols-1 gap-4 mb-10";
+    optsContainer.className = numOptions === 3 ? `${baseClasses} md:grid-cols-3` : `${baseClasses} md:grid-cols-2`;
+    QUIZ_DATABASE[type].options.forEach(opt => { const btn = document.createElement('button'); btn.className = `option-btn px-6 py-5 md:py-6 rounded-2xl text-slate-200 khmer font-bold text-base md:text-xl text-center ${currentAnswer === opt.val ? 'selected' : ''}`; btn.textContent = currentLang === 'en' ? opt.label_en : opt.label; btn.onclick = () => selectAnswer(opt.val); optsContainer.appendChild(btn); });
+    document.getElementById('btn-prev').style.visibility = state.currentIndex === 0 ? 'hidden' : 'visible'; document.getElementById('btn-next').textContent = currentLang === 'en' ? (state.currentIndex === total - 1 ? 'Finish ✓' : 'Next →') : (state.currentIndex === total - 1 ? 'បញ្ចប់តេស្ត ✓' : 'បន្ទាប់ →');
+}
+function selectAnswer(val) { state.answers[state.activeQuiz][state.currentIndex] = val; renderQuestion(); setTimeout(nextQuestion, 200); }
+function nextQuestion() { if (state.answers[state.activeQuiz][state.currentIndex] === undefined) { showToast(currentLang==='km'?'⚠️ សូមជ្រើសរើសចម្លើយមួយសិន!':'⚠️ Please select an option!'); return; } if (state.currentIndex < QUIZ_DATABASE[state.activeQuiz].questions.length - 1) { state.currentIndex++; renderQuestion(); } else { finishQuiz(); } }
+function prevQuestion() { if (state.currentIndex > 0) { state.currentIndex--; renderQuestion(); } }
+function finishQuiz() {
+    const type = state.activeQuiz; document.getElementById(`status-${type}`).textContent = currentLang === 'en' ? "✅ Finished" : "✅ បានបញ្ចប់"; document.getElementById(`status-${type}`).classList.replace('text-slate-500', 'text-cyan-400');
+    state.scores[type].fill(0); QUIZ_DATABASE[type].questions.forEach((q, index) => { if(q.c !== undefined) state.scores[type][q.c] += state.answers[type][index] || 0; });
+    
+    if(auth && state.user.uid) {
+        db.collection('users').doc(state.user.uid).set({ scores: state.scores, answers: state.answers }, {merge: true});
+    }
+    showToast(currentLang==='km'?'🎉 ការវាយតម្លៃត្រូវបានរក្សាទុកក្នុង Database!':'🎉 Assessment Saved to Database!'); showPage('tests');
+}
+
+// Final Report Logic
+function toggleAllResults() { const el = document.getElementById('all-16-results'); el.classList.toggle('hidden'); }
+function generateFinalReport() {
+    if (!state.isPremium) { showPaymentModal(); return; }
+    if (state.answers['interest'] === undefined || state.answers['skill'] === undefined) { showToast(currentLang==='km'?'⚠️ សូមធ្វើតេស្តយ៉ាងហោចណាស់ "ចំណូលចិត្ត" និង "ជំនាញ" ជាមុនសិន!':'⚠️ Please complete at least the Interest and Skill tests first!'); return; }
+    
+    let combinedScores = []; for(let i=0; i<16; i++) { combinedScores.push({ index: i, score: state.scores.interest[i] + state.scores.skill[i] }); }
+    combinedScores.sort((a, b) => b.score - a.score);
+    
+    const container = document.getElementById('report-clusters'); container.innerHTML = '';
+    for(let i=0; i<3; i++) {
+        let clusterIdx = combinedScores[i].index; let rankColor = i===0 ? 'text-pink-400 border-pink-500/50' : (i===1 ? 'text-cyan-400 border-cyan-500/50' : 'text-purple-400 border-purple-500/50'); let rankBg = i===0 ? 'bg-pink-500/10' : (i===1 ? 'bg-cyan-500/10' : 'bg-purple-500/10');
+        let jobsList = currentLang === 'en' ? CLUSTER_JOBS_EN[clusterIdx].split(',').slice(0, 5).join(', ') : CLUSTER_JOBS_KM[clusterIdx].split(',').slice(0, 5).join(', ');
+        let cName = currentLang === 'en' ? CLUSTER_NAMES_EN[clusterIdx] : CLUSTER_NAMES_KM[clusterIdx]; let rankTxt = currentLang === 'en' ? `Rank ${i+1}:` : `ចំណាត់ថ្នាក់ទី ${i+1}:`; let ptsTxt = currentLang === 'en' ? `Pts` : `ពិន្ទុ`; let jobTitle = currentLang === 'en' ? `Popular Careers & Majors:` : `អាជីព និងជំនាញពេញនិយម៖`;
+        container.innerHTML += `<div class="glass p-6 rounded-2xl border ${rankColor} ${rankBg} text-left"><div class="flex justify-between items-center mb-2"><h3 class="font-bold text-white text-lg khmer-title">${rankTxt} ${cName}</h3><span class="font-black ${rankColor} text-xl">${combinedScores[i].score} ${ptsTxt}</span></div><div class="text-base text-slate-400 khmer text-left bg-black/30 p-4 rounded-xl mt-3 leading-relaxed"><b>${jobTitle}</b> ${jobsList}</div></div>`;
+    }
+
+    let maxValIdx = 0, maxValScore = 0; for(let i=0; i<6; i++) { if(state.scores.value[i] > maxValScore) { maxValScore = state.scores.value[i]; maxValIdx = i; } }
+    let vLabel = currentLang === 'en' ? VAL_LABELS_EN[maxValIdx] : VAL_LABELS_KM[maxValIdx]; let vDesc = currentLang === 'en' ? 'This is the work environment you value the most.' : 'នេះជាបរិយាកាសការងារដែលអ្នកឲ្យតម្លៃបំផុត។'; let notTaken = currentLang === 'en' ? 'Not Taken' : 'មិនទាន់បានធ្វើតេស្ត'; let ptsTxt = currentLang === 'en' ? `Pts` : `ពិន្ទុ`; let valTitle = currentLang === 'en' ? `Work Values` : `គុណតម្លៃការងារ`;
+    let valText = state.answers['value'] ? `<span class="text-emerald-400 font-bold block text-lg mb-1">${vLabel} (${maxValScore} ${ptsTxt})</span><span class="text-sm text-slate-300 khmer text-left">${vDesc}</span>` : `<span class="text-slate-500 text-sm khmer text-left">${notTaken}</span>`; document.getElementById('report-value').innerHTML = `<h4 class="font-bold text-white khmer-title text-xl mb-2">${valTitle}</h4>${valText}`;
+
+    let maxPersIdx = 0, maxPersScore = 0; for(let i=0; i<6; i++) { if(state.scores.personality[i] > maxPersScore) { maxPersScore = state.scores.personality[i]; maxPersIdx = i; } }
+    let pLabel = currentLang === 'en' ? PERS_LABELS_EN[maxPersIdx] : PERS_LABELS_KM[maxPersIdx]; let pDesc = currentLang === 'en' ? 'This is your dominant personality trait.' : 'នេះជាប្រភេទអត្តចរិតលេចធ្លោរបស់អ្នក។'; let pTitle = currentLang === 'en' ? `Personality (RIASEC)` : `បុគ្គលិកលក្ខណៈ (RIASEC)`;
+    let persText = state.answers['personality'] ? `<span class="text-orange-400 font-bold block text-lg mb-1">${pLabel} (${maxPersScore} ${ptsTxt})</span><span class="text-sm text-slate-300 khmer text-left">${pDesc}</span>` : `<span class="text-slate-500 text-sm khmer text-left">${notTaken}</span>`; document.getElementById('report-personality').innerHTML = `<h4 class="font-bold text-white khmer-title text-xl mb-2">${pTitle}</h4>${persText}`;
+
+    const allResContainer = document.getElementById('all-16-results'); allResContainer.innerHTML = ''; combinedScores.forEach((item, index) => { let cName = currentLang === 'en' ? CLUSTER_NAMES_EN[item.index] : CLUSTER_NAMES_KM[item.index]; allResContainer.innerHTML += `<div class="glass p-3 rounded-xl border border-white/10 flex justify-between items-center"><span class="text-slate-300 khmer text-sm text-left">${index+1}. ${cName}</span><span class="text-cyan-400 font-bold text-sm">${item.score} ${ptsTxt}</span></div>`; });
+
+    let topClusterName = currentLang === 'en' ? CLUSTER_NAMES_EN[combinedScores[0].index] : CLUSTER_NAMES_KM[combinedScores[0].index]; let topJobsList = currentLang === 'en' ? CLUSTER_JOBS_EN[combinedScores[0].index].split(',').slice(0, 5).join(', ') : CLUSTER_JOBS_KM[combinedScores[0].index].split(',').slice(0, 5).join(', '); let topValName = state.answers['value'] ? (currentLang==='en'?VAL_LABELS_EN[maxValIdx]:VAL_LABELS_KM[maxValIdx]) : '...'; let topPersName = state.answers['personality'] ? (currentLang==='en'?PERS_LABELS_EN[maxPersIdx]:PERS_LABELS_KM[maxPersIdx]) : '...';
+    let conclusionHtml = currentLang === 'en' ? `Through our comprehensive 4-part assessment, we highly recommend you consider a career in <strong class="text-cyan-400">${topClusterName}</strong>. Suitable majors and careers include: <strong class="text-white">${topJobsList}</strong>. This aligns perfectly with you because your dominant personality is <strong class="text-orange-400">${topPersName}</strong>, which thrives in environments that value <strong class="text-emerald-400">${topValName}</strong>. The combination of your strong interest and natural aptitude in this sector will drive your success and fulfillment in your future career.` : `ឆ្លងកាត់ការវាយតម្លៃយ៉ាងល្អិតល្អន់ទាំង ៤ ផ្នែក យើងសូមណែនាំឱ្យអ្នកពិចារណាចាប់យកអាជីពក្នុងវិស័យ <strong class="text-cyan-400">${topClusterName}</strong>។ មុខរបរនិងជំនាញសិក្សាដែលអ្នកគួរពិចារណាមានដូចជា៖ <strong class="text-white">${topJobsList}</strong>។ មុខរបរទាំងនេះពិតជាស័ក្តិសមនឹងអ្នកបំផុត ព្រោះផ្អែកតាមតេស្ត អ្នកជាមនុស្សដែលមានអត្តចរិតលេចធ្លោខាង <strong class="text-orange-400">${topPersName}</strong> ដែលត្រូវការបរិយាកាសការងារដែលផ្តល់តម្លៃទៅលើ <strong class="text-emerald-400">${topValName}</strong>។ ការរួមបញ្ចូលគ្នានៃចំណូលចិត្តដ៏មុតមាំ និងសក្តានុពលពីកំណើតរបស់អ្នកក្នុងវិស័យនេះ នឹងជួយជំរុញឱ្យអ្នកទទួលបានជោគជ័យ និងមានសេចក្តីសុខក្នុងជីវិតការងារនាពេលអនាគត។`;
+    if(!state.answers['value'] || !state.answers['personality']) { conclusionHtml = currentLang === 'en' ? `Through the assessment, we recommend you consider a career in <strong class="text-cyan-400">${topClusterName}</strong>. Suitable majors and careers include: <strong class="text-white">${topJobsList}</strong>. Please complete the "Values" and "Personality" tests to allow the system to provide an even deeper and more personalized conclusion.` : `ឆ្លងកាត់ការវាយតម្លៃ យើងសូមណែនាំឱ្យអ្នកពិចារណាចាប់យកអាជីពក្នុងវិស័យ <strong class="text-cyan-400">${topClusterName}</strong>។ មុខរបរនិងជំនាញសិក្សាដែលស័ក្តិសមមានដូចជា៖ <strong class="text-white">${topJobsList}</strong>។ សូមធ្វើតេស្តបន្តត្រង់ផ្នែក "គុណតម្លៃ" និង "បុគ្គលិកលក្ខណៈ" ឱ្យបានចប់សព្វគ្រប់ ដើម្បីឱ្យប្រព័ន្ធអាចទាញយកសេចក្តីសន្និដ្ឋាន និងការណែនាំបានកាន់តែស៊ីជម្រៅជាងនេះ។`; }
+    document.getElementById('report-conclusion').innerHTML = conclusionHtml; showPage('report');
+}
+
+// Initialize System & Firebase Observer
+document.addEventListener('DOMContentLoaded', () => { 
+    renderCareers(); showPage('home'); startCarousel();
+    if(localStorage.getItem('theme') === 'light') toggleTheme();
+
+    // Touch swipe support for carousel
+    const carousel = document.getElementById('carouselTrack');
+    if(carousel) {
+        let touchStartX = 0, touchEndX = 0;
+        carousel.parentElement.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive:true});
+        carousel.parentElement.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            const diff = touchStartX - touchEndX;
+            if(Math.abs(diff) > 40) { if(diff > 0) { currentSlide = (currentSlide+1)%totalSlides; } else { currentSlide = (currentSlide-1+totalSlides)%totalSlides; } updateCarousel(); pauseCarousel(); startCarousel(); }
+        }, {passive:true});
+    }
+
+    // Close modals on back button (Android)
+    window.addEventListener('popstate', () => {
+        const modals = ['aiExpertModal','paymentModal','loginModal','apiModal'];
+        modals.forEach(id => {
+            const el = document.getElementById(id);
+            if(el && !el.classList.contains('hidden')) { el.style.display='none'; el.classList.add('hidden'); document.body.style.overflow=''; }
+        });
+    });
+    
+    if(auth) {
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                updateLoginUI({uid: user.uid, name: user.displayName});
+                db.collection('users').doc(user.uid).get().then(doc => {
+                    if(doc.exists) {
+                        const data = doc.data();
+                        if(data.isPremium) unlockPremiumFeatures();
+                        if(data.scores) state.scores = data.scores;
+                        if(data.answers) state.answers = data.answers;
+                        if(state.answers['interest']) { document.getElementById('status-interest').textContent = "✅ បានបញ្ចប់"; document.getElementById('status-interest').classList.replace('text-slate-500', 'text-cyan-400'); }
+                        if(state.answers['skill']) { document.getElementById('status-skill').textContent = "✅ បានបញ្ចប់"; document.getElementById('status-skill').classList.replace('text-slate-500', 'text-cyan-400'); }
+                        if(state.answers['value']) { document.getElementById('status-value').textContent = "✅ បានបញ្ចប់"; document.getElementById('status-value').classList.replace('text-slate-500', 'text-cyan-400'); }
+                        if(state.answers['personality']) { document.getElementById('status-personality').textContent = "✅ បានបញ្ចប់"; document.getElementById('status-personality').classList.replace('text-slate-500', 'text-cyan-400'); }
+                    }
+                });
+            } else { updateLoginUI(null); }
+        });
+    }
+});
+</script>
+</body>
+</html>
